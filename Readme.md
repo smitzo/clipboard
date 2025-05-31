@@ -1,0 +1,1 @@
+An online clipboard to share text securely between multiple users.

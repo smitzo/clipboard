@@ -1,0 +1,19 @@
+# Ignore node_modules everywhere
+node_modules/
+
+# Ignore environment files everywhere
+.env
+
+# Client-specific ignores
+client/node_modules/
+client/dist/
+client/.env
+
+# Server-specific ignores
+server/node_modules/
+server/.env
+server/*.log
+
+# OS or Editor specific
+.DS_Store
+.vscode/

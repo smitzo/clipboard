@@ -1,0 +1,60 @@
+How did i make this project (high level over-view)
+
+====================stage-0 project setup===================
+
+--------------------stage 0.1------------------------------
+global: make a repo "clipboard" on my github account
+local:  mkdir clipboard
+        cd clipboard
+        git init
+        git remote add origin https://github.com/smitzo/clipboard.git
+        git remote -v => you should see "origin https://github.com/smitzo/clipboard.git (fetch)"
+        and "origin https://github.com/smitzo/clipboard.git (push)"
+        git branch => if shows master, run: git branch -M main
+
+-----------------------stage 0.2-----------------------------
+local:  cd clipboard
+        touch .gitignore
+        echo "node_modules/\n.env\ndist/\nbuild/\n.DS_Store\n.vscode/" > .gitignore
+        touch README.md
+        echo "# Clipboard Project\n\nThis project is a MERN stack app to manage clipboard data." > README.md
+        git add .gitignore README.md
+        git commit -m "Initial commit: Add README and .gitignore"
+        git push -u origin main
+
+====================stage-1 frontend setup (React + Vite)===================
+
+local:  cd clipboard
+        npm create vite@latest client -- --template react
+        cd client
+        npm install
+        git add .
+        git commit -m "Setup React frontend with Vite"
+        cd ..
+        git add client
+        git commit -m "Add frontend client folder"
+        git push
+
+====================stage-2 backend setup (Node.js + Express)===================
+
+local:  cd clipboard
+        mkdir server
+        cd server
+        npm init -y
+        npm install express
+        touch server.js
+        echo "const express = require('express');\nconst app = express();\nconst PORT = process.env.PORT || 5000;\napp.get('/', (req, res) => res.send('Hello from server'));\napp.listen(PORT, () => console.log('Server running on port', PORT));" > server.js
+        git add .
+        git commit -m "Setup basic Express server"
+        cd ..
+        git add server
+        git commit -m "Add backend server folder"
+        git push
+
+====================stage-3 gitignore update and clean commits===================
+
+local:  cd clipboard
+        echo "client/node_modules/\nclient/dist/\nserver/node_modules/\n.env\n*.log" >> .gitignore
+        git add .gitignore
+        git commit -m "Update .gitignore for client and server folders"
+        git push
