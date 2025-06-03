@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import TextEditor from './components/TextEditor'
+import Home from './components/Home'
 import Navbar from './components/Navbar'
 import Button from './components/Button'
 import Sidebar from './components/Sidebar'
@@ -9,7 +9,7 @@ function App() {
   return (
   <>
     <Navbar/>
-    <TextEditor/>
+    <Home/>
     <Button/>
     <Sidebar/>
   </>
