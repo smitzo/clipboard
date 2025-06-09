@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import {
   Check,
   Clock3,
   Copy,
   Download,
-  KeyRound,
   Link,
   Loader2,
   Pencil,
@@ -26,9 +25,22 @@ const TTL_OPTIONS = [
   { label: '6 hours', value: 360 },
   { label: '24 hours', value: 1440 },
 ]
+const ROOM_ID_PATTERN = /^[A-Za-z0-9]{8,32}$/
+const AUTO_JOIN_MIN_LENGTH = 12
 
 function getErrorMessage(error) {
   return error?.message || 'Something went wrong. Please try again.'
+}
+
+function normalizeRoomInput(value) {
+  const trimmedValue = value.trim()
+
+  try {
+    const url = new URL(trimmedValue)
+    return url.searchParams.get('room') || trimmedValue
+  } catch {
+    return trimmedValue
+  }
 }
 
 async function request(path, options = {}) {
@@ -57,6 +69,8 @@ function App() {
   const [status, setStatus] = useState({ type: 'idle', message: '' })
   const [loading, setLoading] = useState('')
   const [copied, setCopied] = useState('')
+  const lastFetchedRoomId = useRef('')
+  const pendingRoomId = useRef('')
 
   const roomLink = useMemo(() => {
     if (!room?.roomId) return ''
@@ -82,6 +96,16 @@ function App() {
       },
     }).then(setQrCode)
   }, [roomLink])
+
+  useEffect(() => {
+    if (!status.message) return undefined
+
+    const timeout = setTimeout(() => {
+      setStatus({ type: 'idle', message: '' })
+    }, 3200)
+
+    return () => clearTimeout(timeout)
+  }, [status.message])
 
   async function copyValue(value, label) {
     if (!value) return
@@ -113,31 +137,71 @@ function App() {
     }
   }
 
-  const fetchRoom = useCallback(async (roomId) => {
-    const normalizedRoomId = roomId.trim()
+  const fetchRoom = useCallback(async (roomId, options = {}) => {
+    const normalizedRoomId = normalizeRoomInput(roomId)
 
     if (!normalizedRoomId) {
-      setStatus({ type: 'error', message: 'Enter a room ID first.' })
+      if (!options.silent) {
+        setStatus({ type: 'error', message: 'Enter a room ID first.' })
+      }
       return
     }
 
+    if (!ROOM_ID_PATTERN.test(normalizedRoomId)) {
+      if (!options.silent) {
+        setStatus({ type: 'error', message: 'Room ID should be 8 to 32 letters or numbers.' })
+      }
+      return
+    }
+
+    if (
+      options.silent &&
+      (lastFetchedRoomId.current === normalizedRoomId || pendingRoomId.current === normalizedRoomId)
+    ) {
+      return
+    }
+
+    pendingRoomId.current = normalizedRoomId
     setLoading('join')
-    setStatus({ type: 'idle', message: '' })
+    if (!options.silent) {
+      setStatus({ type: 'idle', message: '' })
+    }
 
     try {
       const fetchedRoom = await request(`/rooms/${encodeURIComponent(normalizedRoomId)}`)
 
+      lastFetchedRoomId.current = normalizedRoomId
       setRoom(fetchedRoom)
       setClipboardText(fetchedRoom.text)
       setJoinRoomId(fetchedRoom.roomId)
       setStatus({ type: 'success', message: 'Room loaded into the clipboard.' })
       window.history.replaceState(null, '', `?room=${fetchedRoom.roomId}`)
     } catch (error) {
+      lastFetchedRoomId.current = ''
       setStatus({ type: 'error', message: getErrorMessage(error) })
     } finally {
+      pendingRoomId.current = ''
       setLoading('')
     }
   }, [])
+
+  useEffect(() => {
+    const normalizedRoomId = normalizeRoomInput(joinRoomId)
+
+    if (
+      normalizedRoomId.length < AUTO_JOIN_MIN_LENGTH ||
+      !ROOM_ID_PATTERN.test(normalizedRoomId) ||
+      normalizedRoomId === room?.roomId
+    ) {
+      return undefined
+    }
+
+    const timeout = setTimeout(() => {
+      fetchRoom(normalizedRoomId, { silent: true })
+    }, 650)
+
+    return () => clearTimeout(timeout)
+  }, [fetchRoom, joinRoomId, room?.roomId])
 
   useEffect(() => {
     const roomIdFromUrl = new URLSearchParams(window.location.search).get('room')
@@ -193,6 +257,8 @@ function App() {
       setClipboardText('')
       setJoinRoomId('')
       setQrCode('')
+      lastFetchedRoomId.current = ''
+      pendingRoomId.current = ''
       setStatus({ type: 'success', message: 'Room deleted from the server.' })
       window.history.replaceState(null, '', window.location.pathname)
     } catch (error) {
@@ -215,7 +281,12 @@ function App() {
     <div className="min-h-screen bg-[#f7f8fb] text-slate-950">
       <Navbar />
 
-      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 pt-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
+      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 pt-4 sm:px-6 xl:grid-cols-[280px_minmax(0,1fr)_320px] lg:px-8">
+        <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
+          <Home />
+          <Sidebar />
+        </aside>
+
         <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
             <div className="min-w-0">
@@ -232,7 +303,7 @@ function App() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
               <label className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700">
                 <Clock3 size={16} />
                 <select
@@ -250,29 +321,26 @@ function App() {
                 </select>
               </label>
 
-              <div className="relative w-full sm:w-56">
-                <KeyRound
-                  size={16}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
+              <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+                {loading === 'join' ? (
+                  <Loader2
+                    size={17}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400"
+                  />
+                ) : (
+                  <Search
+                    size={17}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                )}
                 <input
                   value={joinRoomId}
                   onChange={(event) => setJoinRoomId(event.target.value)}
-                  placeholder="Room ID"
+                  placeholder="Paste or enter room ID"
                   className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-semibold tracking-wide outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-4 focus:ring-cyan-100"
+                  aria-label="Room ID auto-join search"
                 />
               </div>
-
-              <Button
-                type="button"
-                variant="secondary"
-                icon={Search}
-                loading={loading === 'join'}
-                disabled={isBusy}
-                onClick={() => fetchRoom(joinRoomId)}
-              >
-                Join
-              </Button>
             </div>
           </div>
 
@@ -281,8 +349,8 @@ function App() {
               id="clipboard-text"
               value={clipboardText}
               onChange={(event) => setClipboardText(event.target.value)}
-              placeholder="Paste anything here. Resize the box from the corner, scroll inside it, then create a room and share the ID or QR."
-              className="min-h-[52vh] w-full resize-y overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-base leading-7 text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 lg:min-h-[64vh]"
+              placeholder="Paste your text here."
+              className="min-h-[52vh] w-full resize-y overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-base leading-7 text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 xl:min-h-[68vh]"
             />
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -339,9 +407,7 @@ function App() {
           </div>
         </section>
 
-        <aside className="space-y-4">
-          <Home />
-          <Sidebar />
+        <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
           <LinkDisplay
             room={room}
             roomLink={roomLink}
@@ -353,7 +419,7 @@ function App() {
 
         {status.message && (
           <div
-            className={`lg:col-span-2 rounded-lg border px-4 py-3 text-sm font-medium ${
+            className={`fixed right-4 top-20 z-30 max-w-sm rounded-lg border px-4 py-3 text-sm font-medium shadow-lg ${
               status.type === 'error'
                 ? 'border-red-200 bg-red-50 text-red-800'
                 : 'border-emerald-200 bg-emerald-50 text-emerald-800'
@@ -364,7 +430,7 @@ function App() {
         )}
       </main>
 
-      {loading && (
+      {loading && loading !== 'join' && (
         <div className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-lg">
           <Loader2 size={16} className="animate-spin" />
           Working
