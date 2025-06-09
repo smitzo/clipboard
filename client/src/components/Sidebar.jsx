@@ -1,49 +1,59 @@
+import { ShieldCheck } from "lucide-react";
 const steps = [
   {
-    title: 'Paste text',
-    text: 'Use the big clipboard box. It expands and scrolls for longer notes.',
+    title: "Make it yours",
+    color: "bg-[#dceee3] text-[#4a8068]",
+    text: "Paste a note, a link, or a snippet into the clipboard.",
   },
   {
-    title: 'Create room',
-    text: 'Click Create room to get a private room ID and QR code.',
+    title: "Create a room",
+    color: "bg-[#e3ecf7] text-[#466489]",
+    text: "Choose an expiry time and get a unique sharing link.",
   },
   {
-    title: 'Share and open',
-    text: 'Send the link, scan QR, or enter the room ID on another device.',
+    title: "Pick up anywhere",
+    color: "bg-[#f6ecd8] text-[#87682c]",
+    text: "Open the link or scan the QR code on another device.",
   },
-]
-
+];
 function Sidebar() {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 className="text-sm font-black uppercase tracking-wide text-slate-900">Steps</h2>
-
-      <div className="mt-4 space-y-4">
+    <section
+      id="how-it-works"
+      className="mt-10 pt-1 [&>h2]:mb-5 [&>h2]:text-lg max-[760px]:mt-[30px]"
+      aria-labelledby="steps-heading"
+    >
+      <h2 id="steps-heading">Three steps. Zero friction.</h2>
+      <div className="grid grid-cols-3 gap-8 max-[960px]:gap-[18px] max-[760px]:grid-cols-1 max-[760px]:gap-5">
         {steps.map((step, index) => (
-          <div key={step.title} className="flex gap-3">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-sm font-black text-emerald-800">
-              {index + 1}
+          <div
+            className="flex items-start gap-3 rounded-[14px] border border-[#dfe8e2] bg-white/72 p-[22px] [&_p]:mt-[5px] [&_p]:text-base max-[760px]:p-[18px]"
+            key={step.title}
+          >
+            <span className={`grid h-10 min-w-10 place-items-center rounded-lg text-sm font-semibold ${step.color}`}>
+              0{index + 1}
             </span>
             <div>
-              <p className="text-sm font-bold text-slate-950">{step.title}</p>
-              <p className="mt-1 text-sm leading-5 text-slate-600">{step.text}</p>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
             </div>
           </div>
         ))}
       </div>
-
-      <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
-        <summary className="cursor-pointer font-bold text-slate-800">Security note</summary>
-        <p className="mt-2 leading-5 text-slate-600">
-          Rooms are temporary, encrypted in server memory, rate-limited, and not publicly listed.
+      <details
+        id="security"
+        className="group mt-6 text-base text-[#607769] [&_p]:mt-2.5 [&_p]:max-w-[700px]"
+      >
+        <summary className="flex w-fit cursor-pointer items-center gap-2 after:ml-1 after:content-['+'] group-open:after:content-['−']">
+          <ShieldCheck size={17} /> A note on privacy
+        </summary>
+        <p>
+          Rooms are temporary and not publicly listed. Anyone with the room ID
+          or link can access the text. Text is encrypted in server memory and
+          removed when the room expires.
         </p>
       </details>
-
-      <p className="mt-3 rounded-lg bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-800">
-        Image pasting is coming soon.
-      </p>
     </section>
-  )
+  );
 }
-
-export default Sidebar
+export default Sidebar;

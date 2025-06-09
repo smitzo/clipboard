@@ -1,35 +1,70 @@
 @import "tailwindcss";
 
-:root {
-  color: #0f172a;
-  background: #f7f8fb;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@layer base {
+  :root {
+    font-family:
+      Inter,
+      ui-sans-serif,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    color: #24342f;
+    background: #f6f8f7;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-* {
-  box-sizing: border-box;
-}
+  body {
+    min-width: 320px;
+  }
+  h2 {
+    @apply text-xl font-[650] tracking-[-0.3px];
+  }
+  h3 {
+    @apply text-lg font-semibold;
+  }
+  p {
+    @apply leading-[1.65] text-[#68766f];
+  }
+  svg {
+    flex-shrink: 0;
+  }
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  a,
+  select {
+    touch-action: manipulation;
+  }
+  button {
+    cursor: pointer;
+  }
+  select:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 3px solid #55a58b;
+    outline-offset: 3px;
+  }
+  section[id] {
+    scroll-margin-top: 24px;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  min-width: 320px;
-  margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(20, 184, 166, 0.12), transparent 32rem),
-    linear-gradient(180deg, #ffffff 0%, #f7f8fb 48%, #eef2f7 100%);
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition: none !important;
+      animation: none !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
