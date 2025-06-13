@@ -52,8 +52,16 @@ Important note: this is secure enough for a portfolio/demo temporary clipboard, 
 clipboard/
   client/          React + Vite frontend
   server/          Express API
+  docs/            Technical documentation, system design, and refactor roadmap
   Readme.md        Project documentation
 ```
+
+## Technical Documentation
+
+Start with the [documentation index](docs/README.md),
+[system design](docs/system-design.md), and [140-commit refactor roadmap](docs/roadmap.md).
+The roadmap is planned work; implementation has not started. Local `openspec/`
+planning artifacts are intentionally ignored by Git, while `docs/` stays tracked.
 
 ## Requirements
 

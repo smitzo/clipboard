@@ -17,3 +17,6 @@ server/*.log
 # OS or Editor specific
 .DS_Store
 .vscode/
+
+# Local OpenSpec planning artifacts
+/openspec/
