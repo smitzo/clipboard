@@ -193,6 +193,10 @@ Deletes the room immediately.
 
 ## Scripts
 
+From the root, `npm run dev` starts both processes and stops them together.
+`npm run check` checks the API and runs client lint/build. Package dependencies
+remain separate: use `npm --prefix client ci` and `npm --prefix server ci`.
+
 ### Server
 
 ```bash
