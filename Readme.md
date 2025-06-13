@@ -65,10 +65,10 @@ planning artifacts are intentionally ignored by Git, while `docs/` stays tracked
 
 ## Requirements
 
-- Node.js 18.19 or newer
+- Node.js 22.12+ or Node.js 24 (maintained patch releases)
 - npm
 
-Node 20 is recommended.
+Node 24 is the development default; npm 10 or 11 is required.
 
 ## Backend Setup
 
@@ -232,4 +232,4 @@ cd client && npm run lint
 cd client && npm run build
 ```
 
-Run the commands with Node 18.19+ or Node 20.
+Run the commands on a supported Node 22 or 24 runtime.
