@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 for (const args of [
   ['--prefix', 'server', 'test'],
   ['--prefix', 'client', 'run', 'lint'],
+  ['--prefix', 'client', 'test'],
   ['--prefix', 'client', 'run', 'build'],
 ]) {
   const result = spawnSync('npm', args, { stdio: 'inherit' });
