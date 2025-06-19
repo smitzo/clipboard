@@ -20,3 +20,9 @@ server/*.log
 
 # Local OpenSpec planning artifacts
 /openspec/
+
+# Generated verification artifacts
+/artifacts/
+/playwright-report/
+/test-results/
+coverage/
