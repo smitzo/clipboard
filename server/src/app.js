@@ -1,3 +1,4 @@
+const { loadConfig } = require('./config');
 const crypto = require('crypto');
 const cors = require('cors');
 const express = require('express');
@@ -5,26 +6,14 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
 
-function createApp() {
+function createApp({ config = loadConfig() } = {}) {
 const app = express();
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
-const DEFAULT_TTL_MINUTES = Number(process.env.DEFAULT_TTL_MINUTES || 60);
-const MAX_TTL_MINUTES = Number(process.env.MAX_TTL_MINUTES || 24 * 60);
-const MAX_TEXT_CHARS = Number(process.env.MAX_TEXT_CHARS || 20000);
+const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
 const ROOM_ID_LENGTH = 12;
 const ROOM_ID_PATTERN = /^[A-Za-z0-9]{8,32}$/;
 const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-
-const clipboardSecret = process.env.CLIPBOARD_SECRET || crypto.randomBytes(32).toString('hex');
-const encryptionKey = crypto.createHash('sha256').update(clipboardSecret).digest();
+const encryptionKey = crypto.createHash('sha256').update(config.secret).digest();
 const rooms = new Map();
-
-const allowedOrigins = new Set(
-  (process.env.CORS_ORIGIN || CLIENT_URL)
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean)
-);
 
 app.disable('x-powered-by');
 app.use(
