@@ -1,6 +1,6 @@
+const { createRoomService } = require('./rooms/service');
 const { registerRoutes } = require('./http/routes');
 const { loadConfig } = require('./config');
-const crypto = require('crypto');
 const cors = require('cors');
 const express = require('express');
 const rateLimit = require('express-rate-limit');
@@ -9,12 +9,8 @@ const helmet = require('helmet');
 
 function createApp({ config = loadConfig() } = {}) {
 const app = express();
-const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
-const ROOM_ID_LENGTH = 12;
-const ROOM_ID_PATTERN = /^[A-Za-z0-9]{8,32}$/;
-const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-const encryptionKey = crypto.createHash('sha256').update(config.secret).digest();
-const rooms = new Map();
+const { allowedOrigins } = config;
+const service = createRoomService({ config });
 
 app.disable('x-powered-by');
 app.use(
@@ -51,143 +47,7 @@ const createRoomLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-function createError(message, status = 400) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
-
-function normalizeRoomId(roomId) {
-  const normalized = String(roomId || '').trim();
-
-  if (!ROOM_ID_PATTERN.test(normalized)) {
-    throw createError('Room ID is invalid.', 400);
-  }
-
-  return normalized;
-}
-
-function generateRoomId() {
-  let roomId = '';
-  const randomBytes = crypto.randomBytes(ROOM_ID_LENGTH);
-
-  for (const byte of randomBytes) {
-    roomId += ROOM_ID_ALPHABET[byte % ROOM_ID_ALPHABET.length];
-  }
-
-  return roomId;
-}
-
-function makeUniqueRoomId() {
-  let roomId = generateRoomId();
-
-  while (rooms.has(roomId)) {
-    roomId = generateRoomId();
-  }
-
-  return roomId;
-}
-
-function parseText(value) {
-  if (typeof value !== 'string') {
-    throw createError('Clipboard text is required.', 400);
-  }
-
-  const text = value.trimEnd();
-
-  if (!text.trim()) {
-    throw createError('Clipboard text cannot be empty.', 400);
-  }
-
-  if (text.length > MAX_TEXT_CHARS) {
-    throw createError(`Clipboard text must be ${MAX_TEXT_CHARS} characters or fewer.`, 413);
-  }
-
-  return text;
-}
-
-function parseTtlMinutes(value) {
-  const ttl = Number(value || DEFAULT_TTL_MINUTES);
-
-  if (!Number.isFinite(ttl) || ttl <= 0) {
-    return DEFAULT_TTL_MINUTES;
-  }
-
-  return Math.min(Math.max(Math.round(ttl), 5), MAX_TTL_MINUTES);
-}
-
-function encryptText(text) {
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', encryptionKey, iv);
-  const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
-
-  return {
-    encryptedText: encrypted.toString('base64'),
-    iv: iv.toString('base64'),
-    authTag: cipher.getAuthTag().toString('base64'),
-  };
-}
-
-function decryptRoom(room) {
-  const decipher = crypto.createDecipheriv(
-    'aes-256-gcm',
-    encryptionKey,
-    Buffer.from(room.iv, 'base64')
-  );
-
-  decipher.setAuthTag(Buffer.from(room.authTag, 'base64'));
-
-  return Buffer.concat([
-    decipher.update(Buffer.from(room.encryptedText, 'base64')),
-    decipher.final(),
-  ]).toString('utf8');
-}
-
-function isExpired(room) {
-  return Date.now() > room.expiresAt;
-}
-
-function getRoomOrThrow(roomId) {
-  const room = rooms.get(normalizeRoomId(roomId));
-
-  if (!room || isExpired(room)) {
-    if (room) {
-      rooms.delete(room.id);
-    }
-
-    throw createError('Room was not found or has expired.', 404);
-  }
-
-  return room;
-}
-
-function roomResponse(room, includeText = false) {
-  const response = {
-    roomId: room.id,
-    charCount: room.charCount,
-    createdAt: new Date(room.createdAt).toISOString(),
-    updatedAt: new Date(room.updatedAt).toISOString(),
-    expiresAt: new Date(room.expiresAt).toISOString(),
-  };
-
-  if (includeText) {
-    response.text = decryptRoom(room);
-  }
-
-  return response;
-}
-
-function cleanupExpiredRooms() {
-  const now = Date.now();
-
-  for (const [roomId, room] of rooms.entries()) {
-    if (now > room.expiresAt) {
-      rooms.delete(roomId);
-    }
-  }
-}
-
-registerRoutes(app, { rooms, MAX_TEXT_CHARS, DEFAULT_TTL_MINUTES, createRoomLimiter, parseText, parseTtlMinutes, makeUniqueRoomId, encryptText, roomResponse, getRoomOrThrow, normalizeRoomId });
+registerRoutes(app, { service, createRoomLimiter });
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found.' });
@@ -206,7 +66,8 @@ app.use((error, req, res, next) => {
 });
 
 
-app.locals.cleanupExpiredRooms = cleanupExpiredRooms;
+app.locals.cleanupExpiredRooms = service.cleanupExpiredRooms;
+app.locals.roomService = service;
 return app;
 }
 module.exports = { createApp };
