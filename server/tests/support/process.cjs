@@ -3,7 +3,7 @@ const net = require('node:net');
 const { setTimeout: pause } = require('node:timers/promises');
 const path = require('node:path');
 
-async function startApi(overrides = {}) {
+async function startApi(overrides = {}, { instrument = false } = {}) {
   const reservation = net.createServer();
   await new Promise((resolve, reject) => {
     reservation.once('error', reject);
@@ -11,13 +11,15 @@ async function startApi(overrides = {}) {
   });
   const port = reservation.address().port;
   await new Promise(resolve => reservation.close(resolve));
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: path.resolve(__dirname, '../..'), stdio: ['ignore', 'pipe', 'pipe'],
+  const child = spawn(process.execPath, [...(instrument ? ['--require', path.resolve(__dirname, 'telemetry.cjs')] : []), 'server.js'], {
+    cwd: path.resolve(__dirname, '../..'), stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
     env: { ...process.env, PORT: String(port), CLIENT_URL: 'http://localhost:5173',
       CORS_ORIGIN: 'http://localhost:5173', CLIPBOARD_SECRET: 'generic-test-secret-never-for-real-data',
       MAX_TEXT_CHARS: '20000', DEFAULT_TTL_MINUTES: '60', MAX_TTL_MINUTES: '1440', ...overrides },
   });
   const exited = new Promise(resolve => child.once('exit', resolve));
+  let metrics = null;
+  child.on('message', message => { if (message?.type === 'benchmark') metrics = message; });
   child.stdout.resume(); child.stderr.resume();
   const origin = `http://127.0.0.1:${port}`;
   async function request(route, { method = 'GET', body, headers = {} } = {}) {
@@ -41,7 +43,7 @@ async function startApi(overrides = {}) {
   try {
     for (let attempt = 0; attempt < 100; attempt++) {
       if (child.exitCode !== null) throw new Error('API process exited before readiness');
-      try { if ((await request('/health')).status === 200) return { origin, request, stop, child }; }
+      try { if ((await request('/health')).status === 200) return { origin, request, stop, child, get metrics() { return metrics; } }; }
       catch { /* The listener may not have started yet. */ }
       await pause(25);
     }
