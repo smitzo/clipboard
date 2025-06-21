@@ -1,0 +1,96 @@
+{
+  "api": {
+    "runtime": "v24.3.0",
+    "platform": "linux",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "results": [
+      {
+        "codeUnits": 128,
+        "concurrency": 4,
+        "routes": {
+          "create": {
+            "samples": 20,
+            "p50Ms": 6.094907000000006,
+            "p95Ms": 18.22730100000001
+          },
+          "read": {
+            "samples": 20,
+            "p50Ms": 1.6452740000000006,
+            "p95Ms": 3.6465100000000064
+          },
+          "update": {
+            "samples": 20,
+            "p50Ms": 2.1501360000000034,
+            "p95Ms": 6.1273310000000265
+          },
+          "delete": {
+            "samples": 20,
+            "p50Ms": 0.7173879999999997,
+            "p95Ms": 1.0661640000000148
+          }
+        },
+        "metrics": {
+          "type": "benchmark",
+          "rss": 75685888,
+          "heapUsed": 10040888,
+          "eventLoopP95Ms": 13.295615
+        }
+      },
+      {
+        "codeUnits": 20000,
+        "concurrency": 4,
+        "routes": {
+          "create": {
+            "samples": 20,
+            "p50Ms": 4.704173999999966,
+            "p95Ms": 11.243246999999997
+          },
+          "read": {
+            "samples": 20,
+            "p50Ms": 1.616363999999976,
+            "p95Ms": 3.6185380000000578
+          },
+          "update": {
+            "samples": 20,
+            "p50Ms": 4.0949170000000095,
+            "p95Ms": 7.864273000000026
+          },
+          "delete": {
+            "samples": 20,
+            "p50Ms": 1.6483349999999746,
+            "p95Ms": 2.1289070000000265
+          }
+        },
+        "metrics": {
+          "type": "benchmark",
+          "rss": 79233024,
+          "heapUsed": 12918168,
+          "eventLoopP95Ms": 12.345343
+        }
+      }
+    ]
+  },
+  "bundle": {
+    "runtime": "v24.3.0",
+    "assets": [
+      {
+        "name": "index-BwUkJN_1.js",
+        "bytes": 240613,
+        "gzipBytes": 77228
+      },
+      {
+        "name": "index-CwUcF-0a.css",
+        "bytes": 28189,
+        "gzipBytes": 6536
+      }
+    ]
+  },
+  "browser": {
+    "fixture": "19960 code units plus 20 insertions",
+    "mode": "development UI; two-animation-frame proxy, not field INP",
+    "samples": 20,
+    "p50Ms": 15.900000005960464,
+    "p95Ms": 30.700000002980232,
+    "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36"
+  }
+}
