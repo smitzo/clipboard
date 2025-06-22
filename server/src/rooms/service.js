@@ -1,10 +1,11 @@
+const { createTextCipher } = require('../security/cipher');
 const crypto = require('node:crypto');
 function createRoomService({ config }) {
 const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
 const ROOM_ID_LENGTH = 12;
 const ROOM_ID_PATTERN = /^[A-Za-z0-9]{8,32}$/;
 const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-const encryptionKey = crypto.createHash('sha256').update(config.secret).digest();
+const { encrypt: encryptText, decrypt: decryptRoom } = createTextCipher(config.secret);
 const rooms = new Map();
 
 function createError(message, status = 400) {
@@ -72,32 +73,9 @@ function parseTtlMinutes(value) {
   return Math.min(Math.max(Math.round(ttl), 5), MAX_TTL_MINUTES);
 }
 
-function encryptText(text) {
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', encryptionKey, iv);
-  const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
 
-  return {
-    encryptedText: encrypted.toString('base64'),
-    iv: iv.toString('base64'),
-    authTag: cipher.getAuthTag().toString('base64'),
-  };
-}
 
-function decryptRoom(room) {
-  const decipher = crypto.createDecipheriv(
-    'aes-256-gcm',
-    encryptionKey,
-    Buffer.from(room.iv, 'base64')
-  );
 
-  decipher.setAuthTag(Buffer.from(room.authTag, 'base64'));
-
-  return Buffer.concat([
-    decipher.update(Buffer.from(room.encryptedText, 'base64')),
-    decipher.final(),
-  ]).toString('utf8');
-}
 
 function isExpired(room) {
   return Date.now() > room.expiresAt;
