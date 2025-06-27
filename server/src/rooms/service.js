@@ -1,3 +1,4 @@
+const { serializeRoom } = require('./serialize');
 const { createMemoryRepository } = require('../storage/memory');
 const { createTextCipher } = require('../security/cipher');
 const crypto = require('node:crypto');
@@ -9,6 +10,7 @@ const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456
 const { encrypt: encryptText, decrypt: decryptRoom } = createTextCipher(config.secret);
 const rooms = repository;
 const nextId = generateId || generateRoomId;
+const roomResponse = (room, includeText = false) => serializeRoom(room, includeText, decryptRoom);
 
 function createError(message, status = 400) {
   const error = new Error(message);
@@ -97,21 +99,7 @@ function getRoomOrThrow(roomId) {
   return room;
 }
 
-function roomResponse(room, includeText = false) {
-  const response = {
-    roomId: room.id,
-    charCount: room.charCount,
-    createdAt: new Date(room.createdAt).toISOString(),
-    updatedAt: new Date(room.updatedAt).toISOString(),
-    expiresAt: new Date(room.expiresAt).toISOString(),
-  };
 
-  if (includeText) {
-    response.text = decryptRoom(room);
-  }
-
-  return response;
-}
 
 function cleanupExpiredRooms() {
   const now = clock.now();
