@@ -1,3 +1,4 @@
+const { createError } = require('./errors');
 const { serializeRoom } = require('./serialize');
 const { createMemoryRepository } = require('../storage/memory');
 const { createTextCipher } = require('../security/cipher');
@@ -12,11 +13,7 @@ const rooms = repository;
 const nextId = generateId || generateRoomId;
 const roomResponse = (room, includeText = false) => serializeRoom(room, includeText, decryptRoom);
 
-function createError(message, status = 400) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
+
 
 function normalizeRoomId(roomId) {
   const normalized = String(roomId || '').trim();

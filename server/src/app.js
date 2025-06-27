@@ -1,3 +1,4 @@
+const { notFound, errorHandler } = require('./http/errors');
 const { createRoomService } = require('./rooms/service');
 const { registerRoutes } = require('./http/routes');
 const { loadConfig } = require('./config');
@@ -49,22 +50,8 @@ const createRoomLimiter = rateLimit({
 
 registerRoutes(app, { service, createRoomLimiter });
 
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found.' });
-});
-
-app.use((error, req, res, next) => {
-  if (res.headersSent) {
-    next(error);
-    return;
-  }
-
-  const status = error.status || 500;
-  const message = status >= 500 ? 'Something went wrong.' : error.message;
-
-  res.status(status).json({ message });
-});
-
+app.use(notFound);
+app.use(errorHandler);
 
 app.locals.cleanupExpiredRooms = service.cleanupExpiredRooms;
 app.locals.roomService = service;
