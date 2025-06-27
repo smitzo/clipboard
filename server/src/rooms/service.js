@@ -1,13 +1,14 @@
 const { createMemoryRepository } = require('../storage/memory');
 const { createTextCipher } = require('../security/cipher');
 const crypto = require('node:crypto');
-function createRoomService({ config, repository = createMemoryRepository() }) {
+function createRoomService({ config, repository = createMemoryRepository(), clock = Date, generateId }) {
 const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
 const ROOM_ID_LENGTH = 12;
 const ROOM_ID_PATTERN = /^[A-Za-z0-9]{8,32}$/;
 const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
 const { encrypt: encryptText, decrypt: decryptRoom } = createTextCipher(config.secret);
 const rooms = repository;
+const nextId = generateId || generateRoomId;
 
 function createError(message, status = 400) {
   const error = new Error(message);
@@ -37,10 +38,10 @@ function generateRoomId() {
 }
 
 function makeUniqueRoomId() {
-  let roomId = generateRoomId();
+  let roomId = nextId();
 
   while (rooms.has(roomId)) {
-    roomId = generateRoomId();
+    roomId = nextId();
   }
 
   return roomId;
@@ -79,7 +80,7 @@ function parseTtlMinutes(value) {
 
 
 function isExpired(room) {
-  return Date.now() > room.expiresAt;
+  return clock.now() > room.expiresAt;
 }
 
 function getRoomOrThrow(roomId) {
@@ -113,7 +114,7 @@ function roomResponse(room, includeText = false) {
 }
 
 function cleanupExpiredRooms() {
-  const now = Date.now();
+  const now = clock.now();
 
   for (const [roomId, room] of rooms.entries()) {
     if (now > room.expiresAt) {
@@ -125,14 +126,14 @@ function cleanupExpiredRooms() {
 
 function create(textValue, ttlValue) {
  const text = parseText(textValue); const ttlMinutes = parseTtlMinutes(ttlValue);
- const roomId = makeUniqueRoomId(); const now = Date.now();
+ const roomId = makeUniqueRoomId(); const now = clock.now();
  const room = { id: roomId, ...encryptText(text), charCount: text.length, createdAt: now, updatedAt: now, expiresAt: now + ttlMinutes * 60000 };
  rooms.set(roomId, room); return roomResponse(room);
 }
 function read(roomId) { return roomResponse(getRoomOrThrow(roomId), true); }
 function update(roomId, value) {
  const room = getRoomOrThrow(roomId); const text = parseText(value);
- Object.assign(room, encryptText(text), { charCount: text.length, updatedAt: Date.now() });
+ Object.assign(room, encryptText(text), { charCount: text.length, updatedAt: clock.now() });
  rooms.set(room.id, room); return roomResponse(room);
 }
 function remove(roomId) { rooms.delete(normalizeRoomId(roomId)); }
