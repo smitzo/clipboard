@@ -1,12 +1,13 @@
+const { createMemoryRepository } = require('../storage/memory');
 const { createTextCipher } = require('../security/cipher');
 const crypto = require('node:crypto');
-function createRoomService({ config }) {
+function createRoomService({ config, repository = createMemoryRepository() }) {
 const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
 const ROOM_ID_LENGTH = 12;
 const ROOM_ID_PATTERN = /^[A-Za-z0-9]{8,32}$/;
 const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
 const { encrypt: encryptText, decrypt: decryptRoom } = createTextCipher(config.secret);
-const rooms = new Map();
+const rooms = repository;
 
 function createError(message, status = 400) {
   const error = new Error(message);

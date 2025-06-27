@@ -7,10 +7,10 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
 
-function createApp({ config = loadConfig() } = {}) {
+function createApp({ config = loadConfig(), repository } = {}) {
 const app = express();
 const { allowedOrigins } = config;
-const service = createRoomService({ config });
+const service = createRoomService({ config, repository });
 
 app.disable('x-powered-by');
 app.use(
