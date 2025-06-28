@@ -1,7 +1,12 @@
-const { createApp } = require('./src/app');
 require('dotenv').config();
-const app = createApp();
-const port = Number(process.env.PORT || 5000);
-const timer = setInterval(app.locals.cleanupExpiredRooms, 5 * 60 * 1000);
-timer.unref();
-app.listen(port, () => console.log(`Clipboard API running on http://localhost:${port}`));
+const { createApp } = require('./src/app');
+const { loadConfig } = require('./src/config');
+const { startServer } = require('./src/lifecycle');
+async function main() {
+ const config = loadConfig();
+ const lifecycle = await startServer({ app: createApp({ config }), port: config.port });
+ console.log(`Clipboard API running on http://localhost:${lifecycle.server.address().port}`);
+ process.once('SIGTERM', () => lifecycle.stop().catch(() => { process.exitCode = 1; }));
+ process.once('SIGINT', () => lifecycle.stop().catch(() => { process.exitCode = 1; }));
+}
+main().catch(() => { console.error('API startup failed.'); process.exitCode = 1; });
