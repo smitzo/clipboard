@@ -65,13 +65,11 @@ function parseText(value) {
 }
 
 function parseTtlMinutes(value) {
-  const ttl = Number(value || DEFAULT_TTL_MINUTES);
-
-  if (!Number.isFinite(ttl) || ttl <= 0) {
-    return DEFAULT_TTL_MINUTES;
+  if (value === undefined) return DEFAULT_TTL_MINUTES;
+  if (!Number.isInteger(value) || value < config.minTtlMinutes || value > MAX_TTL_MINUTES) {
+    throw createError(`Lifetime must be an integer from ${config.minTtlMinutes} to ${MAX_TTL_MINUTES} minutes.`, 400);
   }
-
-  return Math.min(Math.max(Math.round(ttl), 5), MAX_TTL_MINUTES);
+  return value;
 }
 
 

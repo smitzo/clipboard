@@ -18,5 +18,9 @@ spaces, CRLF and Unicode. Whitespace-only text is still invalid. The text limit
 and `charCount` count JavaScript UTF-16 code units; they do not count graphemes
 or UTF-8 bytes. This deliberately corrects the baseline's trailing trim.
 
+An omitted TTL uses the configured default. An explicit TTL must be a numeric
+integer within the configured inclusive minimum and maximum. Null, strings,
+fractions and out-of-range values return 400; there is no rounding or clamping.
+
 Boundary tests use generic fixtures and independent server processes. They test
 observable HTTP behavior, not private helper implementation.

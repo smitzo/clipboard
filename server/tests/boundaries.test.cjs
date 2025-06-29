@@ -14,7 +14,7 @@ test('invalid IDs, empty input, oversized text and absent rooms are bounded', as
 
 test('baseline quirks are characterized before intentional corrections', async t => {
   const api = await startApi(); t.after(() => api.stop());
-  const created = await api.request('/rooms', { method: 'POST', body: { text: 'fixture \n', ttlMinutes: 'invalid' } });
+  const created = await api.request('/rooms', { method: 'POST', body: { text: 'fixture \n' } });
   assert.equal(created.status, 201);
   assert.equal((await api.request(`/rooms/${created.data.roomId}`)).data.text, 'fixture \n');
   assert.equal(Date.parse(created.data.expiresAt) - Date.parse(created.data.createdAt), 60 * 60000);
