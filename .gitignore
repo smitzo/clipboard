@@ -26,3 +26,9 @@ server/*.log
 /playwright-report/
 /test-results/
 coverage/
+
+# Local planning and generated review artifacts
+VERCEL.md
+DEMO_SHOWCASE.md
+VALIDATION.md
+docs/images/demo-showcase-*

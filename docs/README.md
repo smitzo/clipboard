@@ -7,7 +7,9 @@ contracts and measured tradeoffs. Local commands belong in the [project README](
 | Document | Purpose | Status |
 | --- | --- | --- |
 | [System design](system-design.md) | Verified architecture, proposed boundaries, data flows and decisions | Current-state review and proposed refactor |
-| [Refactor roadmap](roadmap.md) | 140 ordered commits, dependencies, validation and completion rules | Planned; implementation has not started |
+| [Refactor roadmap](roadmap.md) | 140 ordered commits, dependencies and engineering gates | Implementation in progress; root ledger records verified boundaries |
+| [Configuration constraints](configuration.md) | Validated ranges, lifetime relationships and fail-fast behavior | Implemented limits |
+| [Backend boundaries](architecture/backend-boundaries.md) | App, service, repository and lifecycle ownership | Implemented extraction |
 
 Local OpenSpec artifacts live in `openspec/changes/refactor-clipboard/` and are
 intentionally ignored by Git. The complete roadmap and reusable technical docs
@@ -26,7 +28,7 @@ docs alongside implementation; phase 13 consolidates and checks the full set.
 | API | `api/openapi.yaml`, `api/README.md` | Routes, schemas, errors, limits, revision preconditions and executable examples |
 | Security | `security/threat-model.md`, `security/privacy.md` | Bearer access, server-side encryption, expiry and leakage controls |
 | Frontend | `frontend/architecture.md`, `frontend/design-system.md`, `frontend/accessibility.md` | State ownership, component contracts, tokens and accessible interactions |
-| Quality | `testing.md`, `performance.md` | Test layers, commands, measured baselines, benchmarks and budgets |
+| Quality | `testing.md`, `performance.md` | Test layers, deterministic fixtures, measured baselines and budgets |
 | Reliability | `reliability/failure-model.md`, `reliability/resource-bounds.md` | Overload, shutdown, process isolation, data loss, resource budgets and recovery semantics |
 | Architectural quality | `architecture/fitness-functions.md` | Traceability between invariants, contracts, tests and measurements |
 
