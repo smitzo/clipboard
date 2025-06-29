@@ -16,7 +16,7 @@ test('baseline quirks are characterized before intentional corrections', async t
   const api = await startApi(); t.after(() => api.stop());
   const created = await api.request('/rooms', { method: 'POST', body: { text: 'fixture \n', ttlMinutes: 'invalid' } });
   assert.equal(created.status, 201);
-  assert.equal((await api.request(`/rooms/${created.data.roomId}`)).data.text, 'fixture');
+  assert.equal((await api.request(`/rooms/${created.data.roomId}`)).data.text, 'fixture \n');
   assert.equal(Date.parse(created.data.expiresAt) - Date.parse(created.data.createdAt), 60 * 60000);
   // These are documented defects, not the desired contract. Phase 3 changes them.
   assert.equal((await api.request('/rooms', { method: 'POST' })).status, 500);

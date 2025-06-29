@@ -51,7 +51,7 @@ function parseText(value) {
     throw createError('Clipboard text is required.', 400);
   }
 
-  const text = value.trimEnd();
+  const text = value;
 
   if (!text.trim()) {
     throw createError('Clipboard text cannot be empty.', 400);
