@@ -22,5 +22,9 @@ An omitted TTL uses the configured default. An explicit TTL must be a numeric
 integer within the configured inclusive minimum and maximum. Null, strings,
 fractions and out-of-range values return 400; there is no rounding or clamping.
 
+POST and PUT require a JSON object. Absent/null/array/scalar bodies return 400;
+unsupported media types return 415. The parser rejects malformed JSON with 400
+and an encoded body larger than 64 KiB with 413 before room mutation.
+
 Boundary tests use generic fixtures and independent server processes. They test
 observable HTTP behavior, not private helper implementation.
