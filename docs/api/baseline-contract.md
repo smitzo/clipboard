@@ -26,5 +26,11 @@ POST and PUT require a JSON object. Absent/null/array/scalar bodies return 400;
 unsupported media types return 415. The parser rejects malformed JSON with 400
 and an encoded body larger than 64 KiB with 413 before room mutation.
 
+IDs are case-sensitive ASCII alphanumeric strings of 8–32 characters. Generated
+IDs remain 12 characters. Surrounding whitespace is rejected rather than trimmed.
+All room methods share the rule after Express percent-decoding; decoded slashes,
+Unicode and malformed escapes are invalid. Valid missing IDs return 404 for read
+and update; deletion remains idempotent with 204.
+
 Boundary tests use generic fixtures and independent server processes. They test
 observable HTTP behavior, not private helper implementation.

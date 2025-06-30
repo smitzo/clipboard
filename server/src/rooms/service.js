@@ -2,11 +2,11 @@ const { createError } = require('./errors');
 const { serializeRoom } = require('./serialize');
 const { createMemoryRepository } = require('../storage/memory');
 const { createTextCipher } = require('../security/cipher');
+const { normalizeRoomId } = require('./id');
 const crypto = require('node:crypto');
 function createRoomService({ config, repository = createMemoryRepository(), clock = Date, generateId }) {
 const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
 const ROOM_ID_LENGTH = 12;
-const ROOM_ID_PATTERN = /^[A-Za-z0-9]{8,32}$/;
 const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
 const { encrypt: encryptText, decrypt: decryptRoom } = createTextCipher(config.secret);
 const rooms = repository;
@@ -14,16 +14,6 @@ const nextId = generateId || generateRoomId;
 const roomResponse = (room, includeText = false) => serializeRoom(room, includeText, decryptRoom);
 
 
-
-function normalizeRoomId(roomId) {
-  const normalized = String(roomId || '').trim();
-
-  if (!ROOM_ID_PATTERN.test(normalized)) {
-    throw createError('Room ID is invalid.', 400);
-  }
-
-  return normalized;
-}
 
 function generateRoomId() {
   let roomId = '';

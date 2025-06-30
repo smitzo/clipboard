@@ -12,6 +12,19 @@ test('invalid IDs, empty input, oversized text and absent rooms are bounded', as
   assert.equal((await api.request('/rooms', { method: 'POST', body: { text: 'x'.repeat(41) } })).status, 413);
 });
 
+test('IDs share strict case-sensitive ASCII validation across read, write and delete', async t => {
+  const api = await startApi(); t.after(() => api.stop());
+  for (const id of ['short', 'x'.repeat(33), '%20ABCDEFGH1234', 'ABCDEFGH1234%20', 'ABCD%2FEFGH', '%E2%98%83ABCDEFGH', '%ZZ']) {
+    for (const method of ['GET', 'PUT', 'DELETE']) {
+      assert.equal((await api.request(`/rooms/${id}`, { method, ...(method === 'PUT' ? { body: { text: 'fixture' } } : {}) })).status, 400);
+    }
+  }
+  for (const id of ['ABCDEFGH', 'a'.repeat(32)]) {
+    assert.equal((await api.request(`/rooms/${id}`)).status, 404);
+    assert.equal((await api.request(`/rooms/${id}`, { method: 'DELETE' })).status, 204);
+  }
+});
+
 test('baseline quirks are characterized before intentional corrections', async t => {
   const api = await startApi(); t.after(() => api.stop());
   const created = await api.request('/rooms', { method: 'POST', body: { text: 'fixture \n' } });
