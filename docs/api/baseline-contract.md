@@ -4,12 +4,10 @@ The characterization suite captures public behavior before modularization.
 The room lifecycle preserves identity, creation time and absolute expiry on
 update, excludes ciphertext from responses and supports idempotent deletion.
 
-The initial implementation trimmed trailing whitespace and silently substituted
-TTL defaults, and returns 500 for absent bodies and disallowed browser
-origins. These are known defects captured to make corrections explicit. They
-are not intended contracts (null JSON is already rejected with 400 by the parser): the room/HTTP phases will update both expectations
-and this decision record. Expiry equality needs an injected clock before it can
-be tested deterministically.
+The initial implementation trimmed trailing whitespace, silently substituted
+TTL defaults and returned 500 for absent bodies and disallowed browser origins.
+These were defects captured before extraction. The corrections below supersede
+that baseline. Deliberate origin denial remains a subsequent security-phase task.
 
 ## Implemented corrections
 

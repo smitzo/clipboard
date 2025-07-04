@@ -294,7 +294,7 @@ and fill distinct technical gaps. Do not postpone behavior docs until this phase
 | 125 | `docs(api): publish an executable OpenAPI contract` | Describe all routes/headers/errors/capabilities/revisions and generic examples; validate schemas against HTTP fixtures, including legacy updates. |
 | 126 | `docs(adr): record major refactor decisions and alternatives` | Index ADRs for ephemeral storage, encryption boundary, capacity/expiry, frontend state, runtime and performance choices; record actual outcomes, not invented history. |
 | 127 | `docs(frontend): publish design tokens and component usage` | Consolidate state ownership, token semantics, primitives and interaction/a11y examples; ensure snippets and screenshots match shipped components. |
-| 128 | `docs(quality): explain regression and performance workflows` | Publish test layers, local commands, deterministic fixtures, benchmark limits and privacy-safe artifacts; execute documented commands. |
+| 128 | `docs(quality): explain regression and performance workflows` | Explain test layers, deterministic fixtures, benchmark limits and privacy-safe artifacts; keep commands in the project README and verify the referenced scripts. |
 | 129 | `docs(reliability): explain overload shutdown and recovery semantics` | Model capacity/rate failures, graceful draining, process restart data loss and recovery tradeoffs; verify against lifecycle tests without platform tutorials. |
 | 130 | `docs(architecture): map invariants to architectural fitness checks` | Connect design invariants to contract, dependency, accessibility and performance checks; verify documentation links and technical examples. |
 
@@ -320,26 +320,12 @@ Gate: clean-clone local checks, full browser/HTTP suites, documentation/contract
 production budgets, resilience/restart rehearsal and a complete commit ledger.
 Workflow files do not count as hosted CI passing until hosted evidence exists.
 
-## Validation commands and evidence
+## Evidence boundaries
 
-Commands available at planning time:
-
-```sh
-npm --prefix server test
-npm --prefix client run lint
-npm --prefix client run build
-OPENSPEC_TELEMETRY=0 openspec validate --all --strict --no-interactive
-git diff --check
-```
-
-Phase 1 will introduce the root orchestration and behavioral/browser commands;
-later phases will document their actual names. Never report planned scripts as
-already runnable. A phase record must include changed behavior, actual commit
-IDs, commands/results, performance evidence where relevant and remaining limits.
-
-Current verified baseline: server syntax, client lint and client build pass;
-JavaScript is 240.61 kB / 77.23 kB gzip, CSS is 28.19 kB / 6.54 kB gzip.
-No behavioral, browser, load or deployment result is claimed for this plan.
+The root engineering ledger records actual commits and local results. Runnable
+commands belong in the project README and package scripts. Phase-1 measurements
+retain their fixture and runtime context; later checks must distinguish local
+component, browser, HTTP and benchmark evidence from hosted or manual results.
 
 ## Definition of done
 

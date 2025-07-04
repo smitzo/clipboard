@@ -1,0 +1,9 @@
+[
+  { "body": { "text": "" }, "status": 400, "code": "INVALID_TEXT" },
+  { "body": { "text": " \n\t" }, "status": 400, "code": "INVALID_TEXT" },
+  { "body": { "text": "fixture", "ttlMinutes": "60" }, "status": 400, "code": "INVALID_TTL" },
+  { "body": { "text": "fixture", "ttlMinutes": null }, "status": 400, "code": "INVALID_TTL" },
+  { "body": { "text": "fixture", "ttlMinutes": 5.5 }, "status": 400, "code": "INVALID_TTL" },
+  { "body": { "text": "fixture", "ttlMinutes": 4 }, "status": 400, "code": "INVALID_TTL" },
+  { "body": { "text": "fixture", "ttlMinutes": 1441 }, "status": 400, "code": "INVALID_TTL" }
+]

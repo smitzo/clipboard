@@ -12,6 +12,19 @@ test('capabilities expose only client-safe limits and health retains legacy keys
  assert.equal((await api.request('/rooms', { method: 'POST', body: { text: 'fixture', ttlMinutes: 9 } })).status, 400);
 });
 
+test('documented correction fixtures are executable HTTP contracts', async t => {
+ const api = await startApi(); t.after(() => api.stop());
+ for (const fixture of require('./fixtures/invalid-room-inputs.json')) {
+  const result = await api.request('/rooms', { method: 'POST', body: fixture.body });
+  assert.equal(result.status, fixture.status);
+  assert.equal(result.data.code, fixture.code);
+  assert.equal(typeof result.data.message, 'string');
+ }
+ const created = await api.request('/rooms', { method: 'POST', body: { text: 'fixture\n ' } });
+ assert.deepEqual(Object.keys(created.data).sort(), ['roomId', 'revision', 'charCount', 'createdAt', 'updatedAt', 'expiresAt'].sort());
+ assert.deepEqual((await api.request(`/rooms/${created.data.roomId}`)).data, { ...created.data, text: 'fixture\n ' });
+});
+
 test('optional strong ETags reject stale updates atomically and legacy clients still save', async t => {
  const api = await startApi(); t.after(() => api.stop());
  const initial = await api.request('/rooms', { method: 'POST', body: { text: 'initial' } });
