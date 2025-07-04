@@ -3,6 +3,7 @@ const { serializeRoom } = require('./serialize');
 const { createMemoryRepository } = require('../storage/memory');
 const { createTextCipher } = require('../security/cipher');
 const { normalizeRoomId } = require('./id');
+const { assertRevision } = require('./revision');
 const crypto = require('node:crypto');
 function createRoomService({ config, repository = createMemoryRepository(), clock = Date, generateId }) {
 const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
@@ -100,13 +101,14 @@ function cleanupExpiredRooms() {
 function create(textValue, ttlValue) {
  const text = parseText(textValue); const ttlMinutes = parseTtlMinutes(ttlValue);
  const roomId = makeUniqueRoomId(); const now = clock.now();
- const room = { id: roomId, ...encryptText(text), charCount: text.length, createdAt: now, updatedAt: now, expiresAt: now + ttlMinutes * 60000 };
+ const room = { id: roomId, ...encryptText(text), revision: 1, charCount: text.length, createdAt: now, updatedAt: now, expiresAt: now + ttlMinutes * 60000 };
  rooms.set(roomId, room); return roomResponse(room);
 }
 function read(roomId) { return roomResponse(getRoomOrThrow(roomId), true); }
-function update(roomId, value) {
+function update(roomId, value, ifMatch) {
  const room = getRoomOrThrow(roomId); const text = parseText(value);
- Object.assign(room, encryptText(text), { charCount: text.length, updatedAt: clock.now() });
+ assertRevision(ifMatch, room.revision);
+ Object.assign(room, encryptText(text), { revision: room.revision + 1, charCount: text.length, updatedAt: clock.now() });
  rooms.set(room.id, room); return roomResponse(room);
 }
 function remove(roomId) { rooms.delete(normalizeRoomId(roomId)); }

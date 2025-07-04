@@ -48,5 +48,13 @@ messages are normalized so malformed JSON cannot echo content in error bodies.
 `maxTextChars` and `defaultTtlMinutes` fields and adds lifetime bounds. Neither
 endpoint exposes secret values, allowed origins or individual room metadata.
 
+Room metadata adds `revision`, starting at 1 and increasing on each update.
+Create/read/update return its quoted strong ETag. PUT optionally accepts
+`If-Match` with a matching quoted revision, a list of strong revisions, or `*`
+for an existing room. Stale revisions return 412 `REVISION_CONFLICT` without
+mutation; malformed/weak preconditions return 400 `INVALID_REVISION`.
+Legacy PUT without this header remains unconditional. Deletion stays
+idempotent and does not require revision metadata.
+
 Boundary tests use generic fixtures and independent server processes. They test
 observable HTTP behavior, not private helper implementation.
