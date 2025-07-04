@@ -32,5 +32,9 @@ All room methods share the rule after Express percent-decoding; decoded slashes,
 Unicode and malformed escapes are invalid. Valid missing IDs return 404 for read
 and update; deletion remains idempotent with 204.
 
+Read, update and cleanup expire a room at `now >= expiresAt`. An earlier update
+preserves creation and absolute expiry timestamps. Missing and expired reads or
+updates receive the same 404 message; cleanup timing never extends access.
+
 Boundary tests use generic fixtures and independent server processes. They test
 observable HTTP behavior, not private helper implementation.

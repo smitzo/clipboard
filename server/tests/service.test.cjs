@@ -10,6 +10,32 @@ test('injected time and IDs make expiry deterministic', () => {
  now += 2; assert.throws(() => service.read(room.roomId), /not found or has expired/);
 });
 
+test('read, update and cleanup agree at the exact absolute expiry deadline', () => {
+ const { createMemoryRepository } = require('../src/storage/memory');
+ for (const delta of [-1, 0, 1]) {
+  let now = 1000000;
+  const repository = createMemoryRepository();
+  const service = createRoomService({ config: loadConfig({}), repository, clock: { now: () => now } });
+  const first = service.create('first', 5); const second = service.create('second', 5);
+  now += 100;
+  const updated = service.update(first.roomId, 'changed');
+  assert.equal(updated.expiresAt, first.expiresAt);
+  now = Date.parse(first.expiresAt) + delta;
+  if (delta < 0) {
+   assert.equal(service.read(first.roomId).text, 'changed');
+   assert.equal(service.update(second.roomId, 'live').expiresAt, second.expiresAt);
+   service.cleanupExpiredRooms(); assert.equal(repository.size, 2);
+  } else {
+   assert.throws(() => service.read(first.roomId), { status: 404 });
+   assert.throws(() => service.update(second.roomId, 'late'), { status: 404 });
+   assert.equal(repository.size, 0);
+  }
+  const third = service.create('cleanup', 5);
+  now = Date.parse(third.expiresAt);
+  service.cleanupExpiredRooms(); assert.equal(repository.size, 0);
+ }
+});
+
 test('TTL defaults only when omitted and explicit lifetimes require integer bounds', () => {
  const config = loadConfig({ CLIPBOARD_SECRET: 'test' });
  const service = createRoomService({ config });
