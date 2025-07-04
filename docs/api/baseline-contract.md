@@ -36,5 +36,12 @@ Read, update and cleanup expire a room at `now >= expiresAt`. An earlier update
 preserves creation and absolute expiry timestamps. Missing and expired reads or
 updates receive the same 404 message; cleanup timing never extends access.
 
+Errors retain `message` and add a stable `code`: `INVALID_ROOM_ID`,
+`INVALID_TEXT`, `TEXT_TOO_LARGE`, `INVALID_TTL`, `INVALID_REQUEST`,
+`INVALID_JSON`, `BODY_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`,
+`ROOM_UNAVAILABLE`, `ROUTE_NOT_FOUND` and `INTERNAL_ERROR`.
+Unexpected failures return a generic 500 with no exception details. Parser
+messages are normalized so malformed JSON cannot echo content in error bodies.
+
 Boundary tests use generic fixtures and independent server processes. They test
 observable HTTP behavior, not private helper implementation.

@@ -38,17 +38,17 @@ function makeUniqueRoomId() {
 
 function parseText(value) {
   if (typeof value !== 'string') {
-    throw createError('Clipboard text is required.', 400);
+    throw createError('Clipboard text is required.', 400, 'INVALID_TEXT');
   }
 
   const text = value;
 
   if (!text.trim()) {
-    throw createError('Clipboard text cannot be empty.', 400);
+    throw createError('Clipboard text cannot be empty.', 400, 'INVALID_TEXT');
   }
 
   if (text.length > MAX_TEXT_CHARS) {
-    throw createError(`Clipboard text must be ${MAX_TEXT_CHARS} characters or fewer.`, 413);
+    throw createError(`Clipboard text must be ${MAX_TEXT_CHARS} characters or fewer.`, 413, 'TEXT_TOO_LARGE');
   }
 
   return text;
@@ -57,7 +57,7 @@ function parseText(value) {
 function parseTtlMinutes(value) {
   if (value === undefined) return DEFAULT_TTL_MINUTES;
   if (!Number.isInteger(value) || value < config.minTtlMinutes || value > MAX_TTL_MINUTES) {
-    throw createError(`Lifetime must be an integer from ${config.minTtlMinutes} to ${MAX_TTL_MINUTES} minutes.`, 400);
+    throw createError(`Lifetime must be an integer from ${config.minTtlMinutes} to ${MAX_TTL_MINUTES} minutes.`, 400, 'INVALID_TTL');
   }
   return value;
 }
@@ -78,7 +78,7 @@ function getRoomOrThrow(roomId) {
       rooms.delete(room.id);
     }
 
-    throw createError('Room was not found or has expired.', 404);
+    throw createError('Room was not found or has expired.', 404, 'ROOM_UNAVAILABLE');
   }
 
   return room;
