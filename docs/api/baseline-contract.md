@@ -43,5 +43,10 @@ Errors retain `message` and add a stable `code`: `INVALID_ROOM_ID`,
 Unexpected failures return a generic 500 with no exception details. Parser
 messages are normalized so malformed JSON cannot echo content in error bodies.
 
+`GET /api/capabilities` exposes only `minTtlMinutes`, `defaultTtlMinutes`,
+`maxTtlMinutes` and `maxTextChars`. Health retains its legacy `ok`, `rooms`,
+`maxTextChars` and `defaultTtlMinutes` fields and adds lifetime bounds. Neither
+endpoint exposes secret values, allowed origins or individual room metadata.
+
 Boundary tests use generic fixtures and independent server processes. They test
 observable HTTP behavior, not private helper implementation.

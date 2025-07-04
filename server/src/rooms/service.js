@@ -110,6 +110,7 @@ function update(roomId, value) {
  rooms.set(room.id, room); return roomResponse(room);
 }
 function remove(roomId) { rooms.delete(normalizeRoomId(roomId)); }
-return { create, read, update, remove, cleanupExpiredRooms, stats: () => ({ rooms: rooms.size, maxTextChars: MAX_TEXT_CHARS, defaultTtlMinutes: DEFAULT_TTL_MINUTES }) };
+const capabilities = () => ({ minTtlMinutes: config.minTtlMinutes, defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS });
+return { create, read, update, remove, cleanupExpiredRooms, capabilities, stats: () => ({ rooms: rooms.size, ...capabilities() }) };
 }
 module.exports = { createRoomService };

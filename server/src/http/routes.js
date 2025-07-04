@@ -1,6 +1,7 @@
 const { requireRoomBody } = require('./room-body');
 function registerRoutes(app, { service, createRoomLimiter }) {
  app.get('/api/health', (req, res) => res.json({ ok: true, ...service.stats() }));
+ app.get('/api/capabilities', (req, res) => res.json(service.capabilities()));
  app.post('/api/rooms', createRoomLimiter, requireRoomBody, (req, res, next) => {
   try { res.status(201).json(service.create(req.body.text, req.body.ttlMinutes)); } catch (error) { next(error); }
  });
