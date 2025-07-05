@@ -12,6 +12,15 @@ test('capabilities expose only client-safe limits and health retains legacy keys
  assert.equal((await api.request('/rooms', { method: 'POST', body: { text: 'fixture', ttlMinutes: 9 } })).status, 400);
 });
 
+test('capacity failures are stable retryable HTTP responses and preserve live rooms', async t => {
+ const api = await startApi({ MAX_ROOMS: '1' }); t.after(() => api.stop());
+ const first = await api.request('/rooms', { method: 'POST', body: { text: 'fixture' } });
+ const rejected = await api.request('/rooms', { method: 'POST', body: { text: 'second' } });
+ assert.equal(rejected.status, 503); assert.equal(rejected.headers.get('retry-after'), '1');
+ assert.equal(rejected.data.code, 'CAPACITY_EXCEEDED');
+ assert.equal((await api.request(`/rooms/${first.data.roomId}`)).data.text, 'fixture');
+});
+
 test('documented correction fixtures are executable HTTP contracts', async t => {
  const api = await startApi(); t.after(() => api.stop());
  for (const fixture of require('./fixtures/invalid-room-inputs.json')) {

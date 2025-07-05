@@ -8,10 +8,11 @@ function errorHandler(error, req, res, next) {
   'encoding.unsupported': [415, 'UNSUPPORTED_MEDIA_TYPE', 'Unsupported request encoding.'],
  }[error.type];
  const pathError = error instanceof URIError && error.status === 400 ? [400, 'INVALID_ROOM_ID', 'Room ID is invalid.'] : null;
- const [status, code, message] = parser || pathError || (typeof error.code === 'string' && error.status >= 400 && error.status < 500
+ const [status, code, message] = parser || pathError || (typeof error.code === 'string' && error.status >= 400 && (error.status < 500 || error.code === 'CAPACITY_EXCEEDED')
   ? [error.status, error.code, error.message]
   : [500, 'INTERNAL_ERROR', 'Something went wrong.']);
  res.locals.errorCode = code;
+ if (error.retryAfter) res.set('Retry-After', String(error.retryAfter));
  res.status(status).json({ code, message });
 }
 module.exports = { notFound, errorHandler };

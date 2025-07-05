@@ -6,6 +6,11 @@ in 0–65535 (0 selects an ephemeral test port); text limits are 1–20,000 UTF-
 code units within the fixed JSON envelope. Lifetime bounds satisfy
 1 ≤ minimum ≤ default ≤ maximum ≤ 525,600 minutes. Defaults are 5/60/1,440.
 
+Room count defaults to 1,000 (range 1–1,000,000); accounted storage defaults to
+64 MiB (range 1 byte–1 GiB). The lower limit may intentionally admit no record.
+These bound retained admission, not total RSS; see the
+[resource model](reliability/resource-bounds.md).
+
 Production requires an explicit encryption secret of at least 32 characters.
 Development may use a random per-process secret. Restart always loses rooms;
 providing a stable secret does not make the in-memory repository persistent.

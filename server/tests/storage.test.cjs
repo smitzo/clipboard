@@ -22,3 +22,13 @@ test('retained encrypted bytes track Unicode replacement and repeated deletion',
  service.remove(first.roomId); invariant(); service.remove(first.roomId); invariant();
  service.remove(second.roomId); assert.deepEqual(repository.stats(), { rooms: 0, retainedBytes: 0 });
 });
+
+test('count and byte admission reject creation without evicting live rooms', () => {
+ for (const env of [{ MAX_ROOMS: '1' }, { MAX_STORAGE_BYTES: '600' }]) {
+  const service = createRoomService({ config: loadConfig(env) });
+  const first = service.create('fixture');
+  assert.throws(() => service.create('second'), { status: 503, code: 'CAPACITY_EXCEEDED', retryAfter: 1 });
+  assert.equal(service.read(first.roomId).text, 'fixture');
+  service.remove(first.roomId); assert.ok(service.create('replacement'));
+ }
+});

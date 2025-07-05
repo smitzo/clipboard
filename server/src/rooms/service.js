@@ -5,7 +5,7 @@ const { createTextCipher } = require('../security/cipher');
 const { normalizeRoomId } = require('./id');
 const { assertRevision } = require('./revision');
 const crypto = require('node:crypto');
-function createRoomService({ config, repository = createMemoryRepository(), clock = Date, generateId }) {
+function createRoomService({ config, repository = createMemoryRepository(config), clock = Date, generateId }) {
 const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
 const ROOM_ID_LENGTH = 12;
 const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';

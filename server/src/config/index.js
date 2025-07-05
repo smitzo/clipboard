@@ -19,6 +19,8 @@ function loadConfig(env = process.env) {
     port: integer('PORT', 5000, 0, 65535),
     clientUrl, minTtlMinutes, defaultTtlMinutes, maxTtlMinutes,
     maxTextChars: integer('MAX_TEXT_CHARS', 20000, 1, 20000),
+    maxRooms: integer('MAX_ROOMS', 1000, 1, 1000000),
+    maxStorageBytes: integer('MAX_STORAGE_BYTES', 64 * 1024 * 1024, 1, 1024 * 1024 * 1024),
     secret: env.CLIPBOARD_SECRET || crypto.randomBytes(32).toString('hex'),
     allowedOrigins: new Set((env.CORS_ORIGIN || clientUrl).split(',').map(origin => origin.trim()).filter(Boolean)),
   };
