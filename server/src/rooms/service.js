@@ -28,13 +28,11 @@ function generateRoomId() {
 }
 
 function makeUniqueRoomId() {
-  let roomId = nextId();
-
-  while (rooms.has(roomId)) {
-    roomId = nextId();
+  for (let attempt = 0; attempt < config.maxIdAttempts; attempt++) {
+    const roomId = normalizeRoomId(nextId());
+    if (!rooms.has(roomId)) return roomId;
   }
-
-  return roomId;
+  throw createError('Unable to allocate a room ID.', 500, 'ID_GENERATION_FAILED');
 }
 
 function parseText(value) {

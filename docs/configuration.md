@@ -14,6 +14,10 @@ These bound retained admission, not total RSS; see the
 Cleanup batch size defaults to 256 with an allowed range of 1–4,096. It bounds
 both scheduled turns and reclamation during pressured admission.
 
+ID allocation attempts default to 8 (range 1–64). A pathological colliding
+source terminates with an internal failure; it cannot replace a live room or
+hold the request in an unbounded generation loop.
+
 Production requires an explicit encryption secret of at least 32 characters.
 Development may use a random per-process secret. Restart always loses rooms;
 providing a stable secret does not make the in-memory repository persistent.

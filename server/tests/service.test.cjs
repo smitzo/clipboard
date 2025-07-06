@@ -10,6 +10,14 @@ test('injected time and IDs make expiry deterministic', () => {
  now += 2; assert.throws(() => service.read(room.roomId), /not found or has expired/);
 });
 
+test('colliding ID sources fail after the finite bound without replacing active data', () => {
+ let attempts = 0;
+ const service = createRoomService({ config: loadConfig({ MAX_ID_ATTEMPTS: '3' }), generateId: () => { attempts++; return 'ABCDEFGH1234'; } });
+ const room = service.create('original');
+ assert.throws(() => service.create('replacement'), { code: 'ID_GENERATION_FAILED', status: 500 });
+ assert.equal(attempts, 4); assert.equal(service.read(room.roomId).text, 'original');
+});
+
 test('read, update and cleanup agree at the exact absolute expiry deadline', () => {
  const { createMemoryRepository } = require('../src/storage/memory');
  for (const delta of [-1, 0, 1]) {
