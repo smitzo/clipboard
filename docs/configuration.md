@@ -11,6 +11,9 @@ Room count defaults to 1,000 (range 1–1,000,000); accounted storage defaults t
 These bound retained admission, not total RSS; see the
 [resource model](reliability/resource-bounds.md).
 
+Cleanup batch size defaults to 256 with an allowed range of 1–4,096. It bounds
+both scheduled turns and reclamation during pressured admission.
+
 Production requires an explicit encryption secret of at least 32 characters.
 Development may use a random per-process secret. Restart always loses rooms;
 providing a stable secret does not make the in-memory repository persistent.

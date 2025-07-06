@@ -88,7 +88,7 @@ function getRoomOrThrow(roomId) {
 
 
 function cleanupExpiredRooms() {
-  return rooms.reclaimDue(clock.now());
+  return rooms.reclaimDue(clock.now(), config.cleanupBatchSize);
 }
 
 

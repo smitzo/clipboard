@@ -33,3 +33,9 @@ Cleanup does not scan live records and there is no timer per room.
 Pressured writes reclaim due heap entries before deciding admission. This makes
 expired capacity reusable between scheduled sweeps. Expiry access checks remain
 authoritative: delayed reclamation never makes an expired room readable.
+
+Scheduled cleanup reclaims at most 256 records per turn by default, then yields
+through one owned immediate callback if more are due. Pressured writes use the
+same bound and may return retryable capacity failure while additional due work
+remains. This bounds synchronous work at O(batch × log n). The scheduler
+eventually catches up without one timer per room or overlapping continuations.

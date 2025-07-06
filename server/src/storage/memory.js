@@ -1,7 +1,7 @@
 const { createError } = require('../rooms/errors');
 const { createDeadlineIndex } = require('./deadlines');
 
-function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 * 1024 } = {}) {
+function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 * 1024, cleanupBatchSize = 256 } = {}) {
   const records = new Map();
   const costs = new Map();
   const deadlines = createDeadlineIndex();
@@ -9,7 +9,7 @@ function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 *
   function set(id, room, now = Date.now()) {
     const cost = retainedCost(room);
     if ((!records.has(id) && records.size >= maxRooms) || retainedBytes - (costs.get(id) || 0) + cost > maxStorageBytes) {
-      reclaimDue(now);
+      reclaimDue(now, cleanupBatchSize);
     }
     if ((!records.has(id) && records.size >= maxRooms) || retainedBytes - (costs.get(id) || 0) + cost > maxStorageBytes) {
       const error = createError('Room capacity is temporarily exhausted. Try again shortly.', 503, 'CAPACITY_EXCEEDED');
