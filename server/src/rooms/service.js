@@ -96,14 +96,14 @@ function create(textValue, ttlValue) {
  const text = parseText(textValue); const ttlMinutes = parseTtlMinutes(ttlValue);
  const roomId = makeUniqueRoomId(); const now = clock.now();
  const room = { id: roomId, ...encryptText(text), revision: 1, charCount: text.length, createdAt: now, updatedAt: now, expiresAt: now + ttlMinutes * 60000 };
- rooms.set(roomId, room); return roomResponse(room);
+ rooms.set(roomId, room, now); return roomResponse(room);
 }
 function read(roomId) { return roomResponse(getRoomOrThrow(roomId), true); }
 function update(roomId, value, ifMatch) {
  const room = getRoomOrThrow(roomId); const text = parseText(value);
  assertRevision(ifMatch, room.revision);
  const replacement = { ...room, ...encryptText(text), revision: room.revision + 1, charCount: text.length, updatedAt: clock.now() };
- rooms.set(room.id, replacement); return roomResponse(replacement);
+ rooms.set(room.id, replacement, clock.now()); return roomResponse(replacement);
 }
 function remove(roomId) { rooms.delete(normalizeRoomId(roomId)); }
 const capabilities = () => ({ minTtlMinutes: config.minTtlMinutes, defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS });

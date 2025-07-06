@@ -23,6 +23,22 @@ test('retained encrypted bytes track Unicode replacement and repeated deletion',
  service.remove(second.roomId); assert.deepEqual(repository.stats(), { rooms: 0, retainedBytes: 0, expiryEntries: 0 });
 });
 
+test('admission reclaims only due records before rejecting a pressured create or update', () => {
+ let now = 0;
+ const repository = createMemoryRepository({ maxRooms: 2, maxStorageBytes: 1260 });
+ const service = createRoomService({ config: loadConfig({}), repository, clock: { now: () => now } });
+ const expired = service.create('expires', 5); const live = service.create('live', 10);
+ now = Date.parse(expired.expiresAt);
+ service.update(live.roomId, 'x'.repeat(100));
+ assert.equal(repository.has(expired.roomId), false);
+ assert.equal(service.read(live.roomId).text.length, 100);
+ const replacement = service.create('new');
+ assert.equal(repository.size, 2);
+ assert.throws(() => service.create('rejected'), { code: 'CAPACITY_EXCEEDED' });
+ assert.equal(service.read(replacement.roomId).text, 'new');
+ assert.equal(service.read(live.roomId).revision, 2);
+});
+
 test('failed growing replacement preserves ciphertext, revision and accounting at exact capacity', () => {
  const repository = createMemoryRepository({ maxRooms: 1, maxStorageBytes: 600 });
  const service = createRoomService({ config: loadConfig({}), repository });

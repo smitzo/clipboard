@@ -6,8 +6,11 @@ function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 *
   const costs = new Map();
   const deadlines = createDeadlineIndex();
   let retainedBytes = 0;
-  function set(id, room) {
+  function set(id, room, now = Date.now()) {
     const cost = retainedCost(room);
+    if ((!records.has(id) && records.size >= maxRooms) || retainedBytes - (costs.get(id) || 0) + cost > maxStorageBytes) {
+      reclaimDue(now);
+    }
     if ((!records.has(id) && records.size >= maxRooms) || retainedBytes - (costs.get(id) || 0) + cost > maxStorageBytes) {
       const error = createError('Room capacity is temporarily exhausted. Try again shortly.', 503, 'CAPACITY_EXCEEDED');
       error.retryAfter = 1;
@@ -24,16 +27,17 @@ function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 *
     deadlines.delete(id);
     return records.delete(id);
   }
+  function reclaimDue(now, limit = Infinity) {
+    let removed = 0;
+    while (removed < limit && deadlines.peek()?.deadline <= now) {
+      remove(deadlines.peek().id); removed++;
+    }
+    return { removed, hasMore: Boolean(deadlines.peek()?.deadline <= now) };
+  }
   return {
     get: id => records.get(id), has: id => records.has(id), set, delete: remove,
     entries: () => records.entries(),
-    reclaimDue(now, limit = Infinity) {
-      let removed = 0;
-      while (removed < limit && deadlines.peek()?.deadline <= now) {
-        remove(deadlines.peek().id); removed++;
-      }
-      return { removed, hasMore: Boolean(deadlines.peek()?.deadline <= now) };
-    },
+    reclaimDue,
     stats: () => ({ rooms: records.size, retainedBytes, expiryEntries: deadlines.size }),
     get size() { return records.size; },
   };

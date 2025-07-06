@@ -29,3 +29,7 @@ Insertion/replacement/deletion cost O(log n); inspecting the next deadline costs
 O(1), and reclaiming k due records costs O(k log n). Replacement removes the
 old index node, so neither repeated saves nor deletion leave stale heap entries.
 Cleanup does not scan live records and there is no timer per room.
+
+Pressured writes reclaim due heap entries before deciding admission. This makes
+expired capacity reusable between scheduled sweeps. Expiry access checks remain
+authoritative: delayed reclamation never makes an expired room readable.
