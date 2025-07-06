@@ -23,6 +23,23 @@ test('retained encrypted bytes track Unicode replacement and repeated deletion',
  service.remove(second.roomId); assert.deepEqual(repository.stats(), { rooms: 0, retainedBytes: 0 });
 });
 
+test('failed growing replacement preserves ciphertext, revision and accounting at exact capacity', () => {
+ const repository = createMemoryRepository({ maxRooms: 1, maxStorageBytes: 600 });
+ const service = createRoomService({ config: loadConfig({}), repository });
+ const room = service.create('x'.repeat(40));
+ const before = { ...repository.get(room.roomId) }; const usage = repository.stats();
+ assert.throws(() => service.update(room.roomId, 'y'.repeat(100)), { code: 'CAPACITY_EXCEEDED' });
+ assert.deepEqual(repository.get(room.roomId), before);
+ assert.deepEqual(repository.stats(), usage);
+ assert.equal(service.read(room.roomId).text, 'x'.repeat(40));
+ const smaller = service.update(room.roomId, 'tiny', '"1"');
+ assert.equal(smaller.revision, 2); assert.equal(smaller.expiresAt, room.expiresAt);
+ assert.ok(repository.stats().retainedBytes < usage.retainedBytes);
+ const exact = createMemoryRepository({ maxStorageBytes: repository.stats().retainedBytes });
+ exact.set(room.roomId, repository.get(room.roomId));
+ assert.equal(exact.size, 1);
+});
+
 test('count and byte admission reject creation without evicting live rooms', () => {
  for (const env of [{ MAX_ROOMS: '1' }, { MAX_STORAGE_BYTES: '600' }]) {
   const service = createRoomService({ config: loadConfig(env) });

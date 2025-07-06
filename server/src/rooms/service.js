@@ -108,8 +108,8 @@ function read(roomId) { return roomResponse(getRoomOrThrow(roomId), true); }
 function update(roomId, value, ifMatch) {
  const room = getRoomOrThrow(roomId); const text = parseText(value);
  assertRevision(ifMatch, room.revision);
- Object.assign(room, encryptText(text), { revision: room.revision + 1, charCount: text.length, updatedAt: clock.now() });
- rooms.set(room.id, room); return roomResponse(room);
+ const replacement = { ...room, ...encryptText(text), revision: room.revision + 1, charCount: text.length, updatedAt: clock.now() };
+ rooms.set(room.id, replacement); return roomResponse(replacement);
 }
 function remove(roomId) { rooms.delete(normalizeRoomId(roomId)); }
 const capabilities = () => ({ minTtlMinutes: config.minTtlMinutes, defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS });

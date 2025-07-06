@@ -17,3 +17,9 @@ establish an RSS ceiling. These independent admission limits constrain growth
 while preserving every existing live room: full admission returns retryable
 503 `CAPACITY_EXCEEDED` with `Retry-After: 1`. The hint permits a later deliberate
 retry and does not promise space after one second. No live-room eviction occurs.
+
+Replacement builds a candidate encrypted record before admission. The repository
+checks its delta against the old recorded cost and only then changes either
+record or accounting. A rejected growing save preserves ciphertext, revision,
+timestamps and expiry. A shrinking save releases the difference even at the
+room-count limit; an exactly fitting byte charge is accepted.
