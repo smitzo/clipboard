@@ -20,7 +20,7 @@ test('retained encrypted bytes track Unicode replacement and repeated deletion',
  assert.equal(stored.text, undefined);
  assert.ok(Buffer.from(stored.encryptedText, 'base64').length > stored.charCount);
  service.remove(first.roomId); invariant(); service.remove(first.roomId); invariant();
- service.remove(second.roomId); assert.deepEqual(repository.stats(), { rooms: 0, retainedBytes: 0 });
+ service.remove(second.roomId); assert.deepEqual(repository.stats(), { rooms: 0, retainedBytes: 0, expiryEntries: 0 });
 });
 
 test('failed growing replacement preserves ciphertext, revision and accounting at exact capacity', () => {

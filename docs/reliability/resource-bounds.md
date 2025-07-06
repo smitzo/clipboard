@@ -23,3 +23,9 @@ checks its delta against the old recorded cost and only then changes either
 record or accounting. A rejected growing save preserves ciphertext, revision,
 timestamps and expiry. A shrinking save releases the difference even at the
 room-count limit; an exactly fitting byte charge is accepted.
+
+Expiry uses an indexed binary min-heap with exactly one node per retained room.
+Insertion/replacement/deletion cost O(log n); inspecting the next deadline costs
+O(1), and reclaiming k due records costs O(k log n). Replacement removes the
+old index node, so neither repeated saves nor deletion leave stale heap entries.
+Cleanup does not scan live records and there is no timer per room.

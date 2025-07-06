@@ -1,8 +1,10 @@
 const { createError } = require('../rooms/errors');
+const { createDeadlineIndex } = require('./deadlines');
 
 function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 * 1024 } = {}) {
   const records = new Map();
   const costs = new Map();
+  const deadlines = createDeadlineIndex();
   let retainedBytes = 0;
   function set(id, room) {
     const cost = retainedCost(room);
@@ -14,16 +16,25 @@ function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 *
     retainedBytes += cost - (costs.get(id) || 0);
     records.set(id, room);
     costs.set(id, cost);
+    deadlines.set(id, room.expiresAt);
   }
   function remove(id) {
     retainedBytes -= costs.get(id) || 0;
     costs.delete(id);
+    deadlines.delete(id);
     return records.delete(id);
   }
   return {
     get: id => records.get(id), has: id => records.has(id), set, delete: remove,
     entries: () => records.entries(),
-    stats: () => ({ rooms: records.size, retainedBytes }),
+    reclaimDue(now, limit = Infinity) {
+      let removed = 0;
+      while (removed < limit && deadlines.peek()?.deadline <= now) {
+        remove(deadlines.peek().id); removed++;
+      }
+      return { removed, hasMore: Boolean(deadlines.peek()?.deadline <= now) };
+    },
+    stats: () => ({ rooms: records.size, retainedBytes, expiryEntries: deadlines.size }),
     get size() { return records.size; },
   };
 }

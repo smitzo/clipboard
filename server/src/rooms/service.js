@@ -88,13 +88,7 @@ function getRoomOrThrow(roomId) {
 
 
 function cleanupExpiredRooms() {
-  const now = clock.now();
-
-  for (const [roomId, room] of rooms.entries()) {
-    if (now >= room.expiresAt) {
-      rooms.delete(roomId);
-    }
-  }
+  return rooms.reclaimDue(clock.now());
 }
 
 
