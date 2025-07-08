@@ -4,30 +4,17 @@ const { createMemoryRepository } = require('../storage/memory');
 const { createTextCipher } = require('../security/cipher');
 const { normalizeRoomId } = require('./id');
 const { assertRevision } = require('./revision');
-const crypto = require('node:crypto');
+const { createRoomIdGenerator } = require('../security/room-id');
 function createRoomService({ config, repository = createMemoryRepository(config), clock = Date, generateId }) {
 const { defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS, allowedOrigins } = config;
-const ROOM_ID_LENGTH = 12;
-const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
 const { encrypt: encryptText, decrypt: decryptRoom } = createTextCipher(config.secret);
 const rooms = repository;
-const nextId = generateId || generateRoomId;
+const nextId = generateId || createRoomIdGenerator();
 const roomResponse = (room, includeText = false) => serializeRoom(room, includeText, decryptRoom);
 let disposed = false;
 function assertActive() { if (disposed) throw new Error('Room service is disposed.'); }
 
 
-
-function generateRoomId() {
-  let roomId = '';
-  const randomBytes = crypto.randomBytes(ROOM_ID_LENGTH);
-
-  for (const byte of randomBytes) {
-    roomId += ROOM_ID_ALPHABET[byte % ROOM_ID_ALPHABET.length];
-  }
-
-  return roomId;
-}
 
 function makeUniqueRoomId() {
   for (let attempt = 0; attempt < config.maxIdAttempts; attempt++) {
