@@ -55,6 +55,7 @@ app.use(errorHandler);
 
 app.locals.cleanupExpiredRooms = service.cleanupExpiredRooms;
 app.locals.roomService = service;
+app.locals.dispose = service.dispose;
 return app;
 }
 module.exports = { createApp };

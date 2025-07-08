@@ -22,3 +22,18 @@ test('mass expiry yields after each bounded batch and eventually reclaims all re
  assert.equal(repository.stats().expiryEntries, 0);
  runner.dispose();
 });
+
+test('disposal cancels queued work and releases retained rooms and index state', () => {
+ const config = loadConfig({ CLEANUP_BATCH_SIZE: '1' });
+ const repository = createMemoryRepository(config);
+ let now = 0; const service = createRoomService({ config, repository, clock: { now: () => now } });
+ service.create('first', 5); service.create('second', 5); now = 300000;
+ let callback; let cancelled = 0;
+ const runner = createCleanupRunner(service.cleanupExpiredRooms, { defer: fn => { callback = fn; return fn; }, cancel: fn => { assert.equal(fn, callback); cancelled++; } });
+ runner.run(); assert.equal(repository.size, 1);
+ runner.dispose(); runner.dispose(); service.dispose(); service.dispose(); callback();
+ assert.equal(cancelled, 1); assert.equal(service.isReady(), false);
+ assert.deepEqual(repository.stats(), { rooms: 0, retainedBytes: 0, expiryEntries: 0 });
+ assert.throws(() => service.create('late'), /disposed/);
+ assert.deepEqual(service.cleanupExpiredRooms(), { removed: 0, hasMore: false });
+});

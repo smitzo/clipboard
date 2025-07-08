@@ -13,6 +13,8 @@ const { encrypt: encryptText, decrypt: decryptRoom } = createTextCipher(config.s
 const rooms = repository;
 const nextId = generateId || generateRoomId;
 const roomResponse = (room, includeText = false) => serializeRoom(room, includeText, decryptRoom);
+let disposed = false;
+function assertActive() { if (disposed) throw new Error('Room service is disposed.'); }
 
 
 
@@ -86,25 +88,28 @@ function getRoomOrThrow(roomId) {
 
 
 function cleanupExpiredRooms() {
+  if (disposed) return { removed: 0, hasMore: false };
   return rooms.reclaimDue(clock.now(), config.cleanupBatchSize);
 }
 
 
 function create(textValue, ttlValue) {
+ assertActive();
  const text = parseText(textValue); const ttlMinutes = parseTtlMinutes(ttlValue);
  const roomId = makeUniqueRoomId(); const now = clock.now();
  const room = { id: roomId, ...encryptText(text), revision: 1, charCount: text.length, createdAt: now, updatedAt: now, expiresAt: now + ttlMinutes * 60000 };
  rooms.set(roomId, room, now); return roomResponse(room);
 }
-function read(roomId) { return roomResponse(getRoomOrThrow(roomId), true); }
+function read(roomId) { assertActive(); return roomResponse(getRoomOrThrow(roomId), true); }
 function update(roomId, value, ifMatch) {
+ assertActive();
  const room = getRoomOrThrow(roomId); const text = parseText(value);
  assertRevision(ifMatch, room.revision);
  const replacement = { ...room, ...encryptText(text), revision: room.revision + 1, charCount: text.length, updatedAt: clock.now() };
  rooms.set(room.id, replacement, clock.now()); return roomResponse(replacement);
 }
-function remove(roomId) { rooms.delete(normalizeRoomId(roomId)); }
+function remove(roomId) { assertActive(); rooms.delete(normalizeRoomId(roomId)); }
 const capabilities = () => ({ minTtlMinutes: config.minTtlMinutes, defaultTtlMinutes: DEFAULT_TTL_MINUTES, maxTtlMinutes: MAX_TTL_MINUTES, maxTextChars: MAX_TEXT_CHARS });
-return { create, read, update, remove, cleanupExpiredRooms, capabilities, stats: () => ({ rooms: rooms.size, ...capabilities() }) };
+return { create, read, update, remove, cleanupExpiredRooms, capabilities, isReady: () => !disposed, dispose() { disposed = true; rooms.dispose(); }, stats: () => ({ rooms: rooms.size, ...capabilities() }) };
 }
 module.exports = { createRoomService };

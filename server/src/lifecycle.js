@@ -12,7 +12,10 @@ async function startServer({ app, port = 5000, host, intervalMs = 300000, schedu
   if (!stopping) {
    cancel(timer);
    cleanup.dispose();
-   stopping = new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+   stopping = new Promise((resolve, reject) => server.close(error => {
+    app.locals.dispose();
+    error ? reject(error) : resolve();
+   }));
    server.closeIdleConnections();
   }
   return stopping;

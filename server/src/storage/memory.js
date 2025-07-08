@@ -6,7 +6,9 @@ function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 *
   const costs = new Map();
   const deadlines = createDeadlineIndex();
   let retainedBytes = 0;
+  let disposed = false;
   function set(id, room, now = Date.now()) {
+    if (disposed) throw new Error('Repository is disposed.');
     const cost = retainedCost(room);
     if ((!records.has(id) && records.size >= maxRooms) || retainedBytes - (costs.get(id) || 0) + cost > maxStorageBytes) {
       reclaimDue(now, cleanupBatchSize);
@@ -38,6 +40,7 @@ function createMemoryRepository({ maxRooms = 1000, maxStorageBytes = 64 * 1024 *
     get: id => records.get(id), has: id => records.has(id), set, delete: remove,
     entries: () => records.entries(),
     reclaimDue,
+    dispose() { disposed = true; records.clear(); costs.clear(); deadlines.clear(); retainedBytes = 0; },
     stats: () => ({ rooms: records.size, retainedBytes, expiryEntries: deadlines.size }),
     get size() { return records.size; },
   };

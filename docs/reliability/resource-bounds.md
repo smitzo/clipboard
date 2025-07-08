@@ -39,3 +39,9 @@ through one owned immediate callback if more are due. Pressured writes use the
 same bound and may return retryable capacity failure while additional due work
 remains. This bounds synchronous work at O(batch × log n). The scheduler
 eventually catches up without one timer per room or overlapping continuations.
+
+Shutdown cancels both interval and queued continuation before closing the
+listener. Once requests finish, disposal clears records, costs and the entire
+deadline index. Disposal is idempotent; late callbacks do no work and a disposed
+service cannot create or update rooms. Disposal releases references and does
+not claim immediate erasure of strings from V8 or the host's memory.
