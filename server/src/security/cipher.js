@@ -1,5 +1,6 @@
 const crypto = require('node:crypto');
 function createTextCipher(secret) {
+if (typeof secret !== 'string' || !secret.trim()) throw new Error('Encryption secret is required.');
 const encryptionKey = crypto.createHash('sha256').update(secret).digest();
 function encryptText(text) {
   const iv = crypto.randomBytes(12);
@@ -13,16 +14,23 @@ function encryptText(text) {
   };
 }
 function decryptRoom(room) {
+  function decode(key, length) {
+    const value = room[key];
+    if (typeof value !== 'string' || !value || Buffer.from(value, 'base64').toString('base64') !== value) throw new Error('Invalid encrypted record.');
+    const bytes = Buffer.from(value, 'base64');
+    if (length && bytes.length !== length) throw new Error('Invalid encrypted record.');
+    return bytes;
+  }
   const decipher = crypto.createDecipheriv(
     'aes-256-gcm',
     encryptionKey,
-    Buffer.from(room.iv, 'base64')
+    decode('iv', 12)
   );
 
-  decipher.setAuthTag(Buffer.from(room.authTag, 'base64'));
+  decipher.setAuthTag(decode('authTag', 16));
 
   return Buffer.concat([
-    decipher.update(Buffer.from(room.encryptedText, 'base64')),
+    decipher.update(decode('encryptedText')),
     decipher.final(),
   ]).toString('utf8');
 }

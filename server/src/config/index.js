@@ -11,6 +11,9 @@ function loadConfig(env = process.env) {
   const minTtlMinutes = integer('MIN_TTL_MINUTES', 5, 1, 525600);
   const maxTtlMinutes = integer('MAX_TTL_MINUTES', 1440, minTtlMinutes, 525600);
   const defaultTtlMinutes = integer('DEFAULT_TTL_MINUTES', 60, minTtlMinutes, maxTtlMinutes);
+  if (env.CLIPBOARD_SECRET !== undefined && (typeof env.CLIPBOARD_SECRET !== 'string' || !env.CLIPBOARD_SECRET.trim())) {
+    throw new Error('Invalid configuration: CLIPBOARD_SECRET.');
+  }
   if (env.NODE_ENV === 'production' && (!env.CLIPBOARD_SECRET || env.CLIPBOARD_SECRET.length < 32)) {
     throw new Error('Invalid configuration: CLIPBOARD_SECRET.');
   }

@@ -10,3 +10,12 @@ Transport, storage encryption, abuse limits and diagnostics have distinct trust
 boundaries. The server receives and decrypts plaintext. AES-GCM is server-side
 encryption and does not protect content from the process or its operator.
 Further implemented controls are recorded here as the security phase proceeds.
+
+Production requires an explicit secret of at least 32 characters; development
+may generate one per process, but an explicitly blank secret is invalid.
+The length rule does not establish entropy: operators must provide a random
+secret. AES-256-GCM derives its key with SHA-256 and uses fresh 12-byte IVs and
+16-byte authentication tags. Invalid base64, IV/tag lengths or authentication
+failures are rejected and produce only a generic HTTP 500. Plaintext and crypto
+exception details are excluded from failure responses. JavaScript strings cannot
+promise secure memory erasure, and restarting still loses every room.
