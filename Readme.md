@@ -198,6 +198,11 @@ From the root, `npm run dev` starts both processes and stops them together.
 `npm run check` checks the API and runs client lint/build. Package dependencies
 remain separate: use `npm --prefix client ci` and `npm --prefix server ci`.
 
+`npm run check` also runs client component tests. `npm run test:browser` runs
+local Chrome journeys. `node scripts/benchmark-api.mjs` measures isolated HTTP
+profiles; `node --expose-gc scripts/profile-storage.cjs` fills the retained-store
+limits and measures bounded cleanup. Reports go to ignored `artifacts/`.
+
 ### Server
 
 ```bash

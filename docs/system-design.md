@@ -1,8 +1,12 @@
 # Clipboard system design
 
-Status: source reviewed on 2026-10-28. Current behavior is separated from the
-proposed refactor; proposed modules, tests, CI and resource controls do not yet
-exist. See the [roadmap](roadmap.md) for delivery boundaries.
+Historical design review: source baseline reviewed on 2026-10-28 before the
+refactor. The baseline sections below describe that original snapshot. Backend
+extraction, validated contracts and bounded storage are now implemented; see
+[backend boundaries](architecture/backend-boundaries.md), the
+[current API contract](api/README.md) and [resource bounds](reliability/resource-bounds.md).
+Remaining proposals follow the [roadmap](roadmap.md); the root ledger records
+actual verified commits.
 
 ## Product scope
 
@@ -13,7 +17,7 @@ delete it. Retain explicit saves and encrypted process-local storage.
 Accounts, room history, uploads, live collaboration, analytics, automatic browser
 text persistence, and durable/distributed storage are outside the baseline plan.
 
-## Verified current architecture
+## Verified original architecture
 
 ```mermaid
 flowchart LR

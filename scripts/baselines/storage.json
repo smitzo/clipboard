@@ -1,0 +1,179 @@
+{
+  "storage": {
+    "runtime": "v24.3.0",
+    "platform": "linux",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "gcExposed": true,
+    "profiles": [
+      {
+        "payload": "ASCII",
+        "codeUnits": 20000,
+        "baseline": {
+          "rss": 52817920,
+          "heapTotal": 7389184,
+          "heapUsed": 4171016,
+          "external": 1596346,
+          "arrayBuffers": 16623
+        },
+        "full": {
+          "rss": 128618496,
+          "heapTotal": 102809600,
+          "heapUsed": 31486584,
+          "external": 3217998,
+          "arrayBuffers": 16655
+        },
+        "released": {
+          "rss": 128749568,
+          "heapTotal": 76857344,
+          "heapUsed": 4422672,
+          "external": 1596382,
+          "arrayBuffers": 16655
+        },
+        "usage": {
+          "rooms": 1000,
+          "retainedBytes": 53824000,
+          "expiryEntries": 1000
+        },
+        "batches": [
+          {
+            "removed": 256,
+            "durationMs": 0.4253969999999754
+          },
+          {
+            "removed": 256,
+            "durationMs": 0.3407189999999787
+          },
+          {
+            "removed": 256,
+            "durationMs": 0.44518099999999095
+          },
+          {
+            "removed": 232,
+            "durationMs": 0.21497199999998884
+          }
+        ],
+        "after": {
+          "rooms": 0,
+          "retainedBytes": 0,
+          "expiryEntries": 0
+        }
+      },
+      {
+        "payload": "three-byte Unicode",
+        "codeUnits": 20000,
+        "baseline": {
+          "rss": 128749568,
+          "heapTotal": 72663040,
+          "heapUsed": 4386144,
+          "external": 1596382,
+          "arrayBuffers": 16623
+        },
+        "full": {
+          "rss": 171360256,
+          "heapTotal": 176734208,
+          "heapUsed": 38021112,
+          "external": 11199570,
+          "arrayBuffers": 16655
+        },
+        "released": {
+          "rss": 171491328,
+          "heapTotal": 140558336,
+          "heapUsed": 4378896,
+          "external": 1596382,
+          "arrayBuffers": 16655
+        },
+        "usage": {
+          "rooms": 418,
+          "retainedBytes": 67083984,
+          "expiryEntries": 418
+        },
+        "batches": [
+          {
+            "removed": 256,
+            "durationMs": 0.15330299999999397
+          },
+          {
+            "removed": 162,
+            "durationMs": 0.11818900000000099
+          }
+        ],
+        "after": {
+          "rooms": 0,
+          "retainedBytes": 0,
+          "expiryEntries": 0
+        }
+      }
+    ]
+  },
+  "api": {
+    "runtime": "v24.3.0",
+    "platform": "linux",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "results": [
+      {
+        "codeUnits": 128,
+        "concurrency": 4,
+        "routes": {
+          "create": {
+            "samples": 20,
+            "p50Ms": 4.041359999999997,
+            "p95Ms": 19.371365999999995
+          },
+          "read": {
+            "samples": 20,
+            "p50Ms": 2.1437380000000132,
+            "p95Ms": 4.110513999999995
+          },
+          "update": {
+            "samples": 20,
+            "p50Ms": 2.346660000000014,
+            "p95Ms": 5.840617000000009
+          },
+          "delete": {
+            "samples": 20,
+            "p50Ms": 0.6712729999999851,
+            "p95Ms": 0.9861760000000004
+          }
+        },
+        "metrics": {
+          "type": "benchmark",
+          "rss": 75014144,
+          "heapUsed": 12462416,
+          "eventLoopP95Ms": 16.826367
+        }
+      },
+      {
+        "codeUnits": 20000,
+        "concurrency": 4,
+        "routes": {
+          "create": {
+            "samples": 20,
+            "p50Ms": 4.243475999999987,
+            "p95Ms": 11.257162999999991
+          },
+          "read": {
+            "samples": 20,
+            "p50Ms": 2.1952229999999417,
+            "p95Ms": 3.930238999999915
+          },
+          "update": {
+            "samples": 20,
+            "p50Ms": 2.754099999999994,
+            "p95Ms": 4.996597000000065
+          },
+          "delete": {
+            "samples": 20,
+            "p50Ms": 0.7371289999999817,
+            "p95Ms": 4.272751999999969
+          }
+        },
+        "metrics": {
+          "type": "benchmark",
+          "rss": 77447168,
+          "heapUsed": 10572368,
+          "eventLoopP95Ms": 13.082623
+        }
+      }
+    ]
+  }
+}

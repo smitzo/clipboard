@@ -6,11 +6,12 @@ contracts and measured tradeoffs. Local commands belong in the [project README](
 
 | Document | Purpose | Status |
 | --- | --- | --- |
-| [System design](system-design.md) | Verified architecture, proposed boundaries, data flows and decisions | Current-state review and proposed refactor |
+| [System design](system-design.md) | Original architecture review and proposed design | Historical baseline with links to implemented contracts |
 | [Refactor roadmap](roadmap.md) | 140 ordered commits, dependencies and engineering gates | Implementation in progress; root ledger records verified boundaries |
 | [Configuration constraints](configuration.md) | Validated ranges, lifetime relationships and fail-fast behavior | Implemented limits |
 | [Backend boundaries](architecture/backend-boundaries.md) | App, service, repository and lifecycle ownership | Implemented extraction |
 | [Room API contract](api/README.md) | Corrected room semantics and legacy compatibility | Local HTTP and deterministic clock evidence |
+| [Resource bounds](reliability/resource-bounds.md) | Admission accounting, indexed expiry and cleanup ownership | Implemented; local sizing evidence |
 
 Local OpenSpec artifacts live in `openspec/changes/refactor-clipboard/` and are
 intentionally ignored by Git. The complete roadmap and reusable technical docs
