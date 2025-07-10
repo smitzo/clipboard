@@ -19,3 +19,9 @@ secret. AES-256-GCM derives its key with SHA-256 and uses fresh 12-byte IVs and
 failures are rejected and produce only a generic HTTP 500. Plaintext and crypto
 exception details are excluded from failure responses. JavaScript strings cannot
 promise secure memory erasure, and restarting still loses every room.
+
+All API responses, including failures and capability metadata, set `no-store`.
+Room ETags serve optional PUT preconditions; conditional GET validators are
+ignored to prevent 304 reuse of sensitive content. Intermediaries must preserve
+these headers and exclude room responses from caches. This is a required
+boundary assumption, not verified proxy/CDN behavior.

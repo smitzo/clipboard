@@ -2,6 +2,7 @@ const { notFound, errorHandler } = require('./http/errors');
 const { createRoomService } = require('./rooms/service');
 const { registerRoutes } = require('./http/routes');
 const { loadConfig } = require('./config');
+const { noStore } = require('./http/cache');
 const cors = require('cors');
 const express = require('express');
 const rateLimit = require('express-rate-limit');
@@ -14,6 +15,8 @@ const { allowedOrigins } = config;
 const service = createRoomService({ config, repository });
 
 app.disable('x-powered-by');
+app.disable('etag');
+app.use(noStore);
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
