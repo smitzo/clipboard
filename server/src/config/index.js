@@ -18,6 +18,13 @@ function loadConfig(env = process.env) {
     throw new Error('Invalid configuration: CLIPBOARD_SECRET.');
   }
   const clientUrl = env.CLIENT_URL || 'http://localhost:5173';
+  const origins = (env.CORS_ORIGIN ?? clientUrl).split(',').map(origin => origin.trim());
+  function validOrigin(value) {
+    try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && url.origin === value; }
+    catch { return false; }
+  }
+  if (!validOrigin(clientUrl)) throw new Error('Invalid configuration: CLIENT_URL.');
+  if (!origins.length || origins.some(origin => !validOrigin(origin))) throw new Error('Invalid configuration: CORS_ORIGIN.');
   return {
     port: integer('PORT', 5000, 0, 65535),
     clientUrl, minTtlMinutes, defaultTtlMinutes, maxTtlMinutes,
@@ -27,7 +34,7 @@ function loadConfig(env = process.env) {
     maxIdAttempts: integer('MAX_ID_ATTEMPTS', 8, 1, 64),
     maxStorageBytes: integer('MAX_STORAGE_BYTES', 64 * 1024 * 1024, 1, 1024 * 1024 * 1024),
     secret: env.CLIPBOARD_SECRET || crypto.randomBytes(32).toString('hex'),
-    allowedOrigins: new Set((env.CORS_ORIGIN || clientUrl).split(',').map(origin => origin.trim()).filter(Boolean)),
+    allowedOrigins: new Set(origins),
   };
 }
 module.exports = { loadConfig };

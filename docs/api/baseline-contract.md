@@ -7,7 +7,7 @@ update, excludes ciphertext from responses and supports idempotent deletion.
 The initial implementation trimmed trailing whitespace, silently substituted
 TTL defaults and returned 500 for absent bodies and disallowed browser origins.
 These were defects captured before extraction. The corrections below supersede
-that baseline. Deliberate origin denial remains a subsequent security-phase task.
+that baseline. Origin denial now deliberately returns 403 `ORIGIN_DENIED`.
 
 ## Implemented corrections
 

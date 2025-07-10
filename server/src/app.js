@@ -3,6 +3,7 @@ const { createRoomService } = require('./rooms/service');
 const { registerRoutes } = require('./http/routes');
 const { loadConfig } = require('./config');
 const { noStore } = require('./http/cache');
+const { createError } = require('./rooms/errors');
 const cors = require('cors');
 const express = require('express');
 const rateLimit = require('express-rate-limit');
@@ -24,13 +25,16 @@ app.use(
 );
 app.use(
   cors({
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'If-Match', 'X-Request-ID'],
+    exposedHeaders: ['ETag', 'Retry-After', 'X-Request-ID'],
     origin(origin, callback) {
       if (!origin || allowedOrigins.has(origin)) {
         callback(null, true);
         return;
       }
 
-      callback(new Error('Origin is not allowed by CORS'));
+      callback(createError('Origin is not allowed.', 403, 'ORIGIN_DENIED'));
     },
   })
 );

@@ -25,3 +25,10 @@ Room ETags serve optional PUT preconditions; conditional GET validators are
 ignored to prevent 304 reuse of sensitive content. Intermediaries must preserve
 these headers and exclude room responses from caches. This is a required
 boundary assumption, not verified proxy/CDN behavior.
+
+Origins must be explicit HTTP(S) origins without paths, credentials, wildcards
+or opaque `null`. Denied origins receive 403 `ORIGIN_DENIED` before room work;
+allowed preflights include JSON and revision headers, and expose ETag/retry
+headers to the browser. Requests without Origin remain supported for nonbrowser
+clients. Any client can omit or spoof Origin: CORS is a browser policy, not an
+authorization or anti-abuse boundary.

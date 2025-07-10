@@ -18,6 +18,10 @@ ID allocation attempts default to 8 (range 1–64). A pathological colliding
 source terminates with an internal failure; it cannot replace a live room or
 hold the request in an unbounded generation loop.
 
+Client URL and the comma-separated origin set must contain exact HTTP(S)
+origins: scheme, host and optional port, with no path, trailing slash, credentials
+or wildcard. Invalid origin policy fails startup rather than broadening access.
+
 Production requires an explicit encryption secret of at least 32 characters.
 Development may use a random per-process secret. Restart always loses rooms;
 providing a stable secret does not make the in-memory repository persistent.
