@@ -40,8 +40,8 @@ app.use(
     },
   })
 );
-app.use(express.json({ limit: '64kb' }));
 app.use('/api/rooms', policies.global);
+app.use(express.json({ limit: '64kb' }));
 registerRoutes(app, { service, createRoomLimiter: policies.create, readLimiter: policies.read, mutationLimiter: policies.mutation });
 
 app.use(notFound);

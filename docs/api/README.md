@@ -36,3 +36,10 @@ behavior from corrections. Generic invalid examples in
 `contract.test.cjs`; lifecycle and boundary tests cover successful legacy use,
 exact text, ETags, parser limits and idempotent deletion. These are local HTTP
 and injected-clock checks; they do not establish hosted or proxy behavior.
+
+Parser/media failures use 400 `INVALID_JSON`, 413 `BODY_TOO_LARGE` or 415
+`UNSUPPORTED_MEDIA_TYPE`. Text-limit 413 remains `TEXT_TOO_LARGE`. Rate failures
+return JSON 429 `RATE_LIMITED` with `Retry-After`; capacity failures use retryable
+503 `CAPACITY_EXCEEDED`. Security, CORS (for allowed origins) and no-store
+headers remain present on these failures. The aggregate room budget runs before
+body parsing so malformed bodies still consume request budget.

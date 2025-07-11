@@ -2,7 +2,7 @@ const { createError } = require('../rooms/errors');
 
 function requireRoomBody(req, res, next) {
   if (req.headers['content-type'] && !req.is('application/json')) {
-    return next(createError('Room requests require application/json.', 415));
+    return next(createError('Room requests require application/json.', 415, 'UNSUPPORTED_MEDIA_TYPE'));
   }
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return next(createError('A JSON object body is required.', 400));

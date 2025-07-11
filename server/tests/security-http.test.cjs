@@ -16,6 +16,26 @@ test('room success, failure and capability responses prohibit caches including c
  assert.equal(responses[6].status, 412);
 });
 
+test('parser, media and rate failures remain readable JSON with security and retry headers', async t => {
+ const api = await startApi({ RATE_LIMIT_CREATE: '1' }); t.after(() => api.stop());
+ const requests = [
+  { body: '{private fixture', type: 'application/json', status: 400, code: 'INVALID_JSON' },
+  { body: JSON.stringify({ text: 'x'.repeat(66000) }), type: 'application/json', status: 413, code: 'BODY_TOO_LARGE' },
+  { body: 'fixture', type: 'text/plain', status: 415, code: 'UNSUPPORTED_MEDIA_TYPE' },
+  { body: JSON.stringify({ text: 'fixture' }), type: 'application/json', status: 429, code: 'RATE_LIMITED' },
+ ];
+ for (const fixture of requests) {
+  const response = await fetch(`${api.origin}/api/rooms`, { method: 'POST', headers: { 'Content-Type': fixture.type, Origin: 'http://localhost:5173' }, body: fixture.body });
+  assert.equal(response.status, fixture.status);
+  const error = await response.json(); assert.equal(error.code, fixture.code);
+  assert.equal(typeof error.message, 'string'); assert.ok(!error.message.includes('private fixture'));
+  assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(response.headers.get('access-control-allow-origin'), 'http://localhost:5173');
+  if (fixture.status === 429) assert.ok(Number(response.headers.get('retry-after')) > 0);
+ }
+});
+
 test('origin policy allows exact configured origins and deliberate preflight without treating CORS as auth', async t => {
  const api = await startApi(); t.after(() => api.stop());
  const origin = 'http://localhost:5173';

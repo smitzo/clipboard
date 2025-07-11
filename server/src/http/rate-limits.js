@@ -1,4 +1,5 @@
 const { rateLimit, MemoryStore } = require('express-rate-limit');
+const { createError } = require('../rooms/errors');
 
 function createRatePolicies(config) {
   const stores = [];
@@ -6,6 +7,7 @@ function createRatePolicies(config) {
     const store = new MemoryStore(); stores.push(store);
     return rateLimit({ windowMs: config.rateWindowMs, limit, store,
       standardHeaders: 'draft-7', legacyHeaders: false,
+      handler(req, res, next) { next(createError('Too many requests. Try again shortly.', 429, 'RATE_LIMITED')); },
       // Forwarded headers are ignored unless the explicit proxy trust policy allows them.
       validate: { xForwardedForHeader: false, forwardedHeader: false },
     });
