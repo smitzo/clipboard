@@ -3,6 +3,7 @@ const { createRoomService } = require('./rooms/service');
 const { registerRoutes } = require('./http/routes');
 const { loadConfig } = require('./config');
 const { noStore } = require('./http/cache');
+const { requestDiagnostics } = require('./http/diagnostics');
 const { createError } = require('./rooms/errors');
 const cors = require('cors');
 const express = require('express');
@@ -10,7 +11,7 @@ const { createRatePolicies } = require('./http/rate-limits');
 const helmet = require('helmet');
 
 
-function createApp({ config = loadConfig(), repository } = {}) {
+function createApp({ config = loadConfig(), repository, logger = () => {} } = {}) {
 const app = express();
 const { allowedOrigins } = config;
 const service = createRoomService({ config, repository });
@@ -19,6 +20,7 @@ const policies = createRatePolicies(config);
 app.disable('x-powered-by');
 app.disable('etag');
 app.set('trust proxy', config.trustProxy);
+app.use(requestDiagnostics(logger));
 app.use(noStore);
 app.use(
   helmet({

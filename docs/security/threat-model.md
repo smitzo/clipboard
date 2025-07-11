@@ -41,3 +41,11 @@ explicit trusted IP/CIDR ranges (or loopback). Broad trust booleans, hop counts
 and world-wide CIDRs are invalid. A trusted proxy must overwrite untrusted
 forwarding headers; configuration alone cannot prove network topology.
 Limiter windows and counters belong to the app and are disposed on shutdown.
+
+Diagnostics contain only a server-generated UUID, method, route template, status,
+elapsed milliseconds and stable error code. Unknown paths use `unmatched`.
+Incoming request IDs are ignored. Bodies, IPs, raw paths, query strings, room
+IDs and secrets are excluded; aborted responses are classified as 499. Logger
+failures cannot block response completion. Bootstrap writes JSON events to its
+output stream without retaining a history in the app. Collection/retention of
+that stream is an external responsibility and has no verified retention policy.
