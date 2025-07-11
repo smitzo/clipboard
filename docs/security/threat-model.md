@@ -32,3 +32,12 @@ allowed preflights include JSON and revision headers, and expose ETag/retry
 headers to the browser. Requests without Origin remain supported for nonbrowser
 clients. Any client can omit or spoof Origin: CORS is a browser policy, not an
 authorization or anti-abuse boundary.
+
+Rate policies apply to room traffic: 120 total, 30 creates, 90 reads and 60
+mutations per client per 15-minute window by default. Aggregate and route budgets
+both apply; health does not consume room capacity. Socket IP is the default key.
+Forwarded headers only influence keys when their immediate proxy chain matches
+explicit trusted IP/CIDR ranges (or loopback). Broad trust booleans, hop counts
+and world-wide CIDRs are invalid. A trusted proxy must overwrite untrusted
+forwarding headers; configuration alone cannot prove network topology.
+Limiter windows and counters belong to the app and are disposed on shutdown.

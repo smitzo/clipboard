@@ -22,6 +22,12 @@ Client URL and the comma-separated origin set must contain exact HTTP(S)
 origins: scheme, host and optional port, with no path, trailing slash, credentials
 or wildcard. Invalid origin policy fails startup rather than broadening access.
 
+Proxy trust defaults to false. Explicit IP/CIDR sets or `loopback` are accepted;
+boolean true, hop counts and /0 ranges are rejected. Per-IP room budgets default
+to 120 total, 30 creates, 90 reads and 60 mutations in 900,000 ms. Limits must be
+integers 1–1,000,000 and windows 1,000–3,600,000 ms. These counters are process
+local; multiple instances do not share a global abuse budget.
+
 Production requires an explicit encryption secret of at least 32 characters.
 Development may use a random per-process secret. Restart always loses rooms;
 providing a stable secret does not make the in-memory repository persistent.

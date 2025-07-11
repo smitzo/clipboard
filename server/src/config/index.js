@@ -1,4 +1,5 @@
 const crypto = require('node:crypto');
+const { isIP } = require('node:net');
 function loadConfig(env = process.env) {
   function integer(name, fallback, min, max) {
     const raw = env[name] === undefined ? fallback : env[name];
@@ -25,6 +26,15 @@ function loadConfig(env = process.env) {
   }
   if (!validOrigin(clientUrl)) throw new Error('Invalid configuration: CLIENT_URL.');
   if (!origins.length || origins.some(origin => !validOrigin(origin))) throw new Error('Invalid configuration: CORS_ORIGIN.');
+  let trustProxy = false;
+  if (env.TRUST_PROXY !== undefined && env.TRUST_PROXY !== 'false') {
+    trustProxy = env.TRUST_PROXY.split(',').map(value => value.trim());
+    if (!trustProxy.length || trustProxy.some(value => {
+      if (value === 'loopback') return false;
+      const [address, mask, extra] = value.split('/'); const version = isIP(address);
+      return !version || extra !== undefined || (mask !== undefined && (!/^\d+$/.test(mask) || +mask < 1 || +mask > (version === 4 ? 32 : 128)));
+    })) throw new Error('Invalid configuration: TRUST_PROXY.');
+  }
   return {
     port: integer('PORT', 5000, 0, 65535),
     clientUrl, minTtlMinutes, defaultTtlMinutes, maxTtlMinutes,
@@ -32,6 +42,12 @@ function loadConfig(env = process.env) {
     maxRooms: integer('MAX_ROOMS', 1000, 1, 1000000),
     cleanupBatchSize: integer('CLEANUP_BATCH_SIZE', 256, 1, 4096),
     maxIdAttempts: integer('MAX_ID_ATTEMPTS', 8, 1, 64),
+    trustProxy,
+    rateWindowMs: integer('RATE_LIMIT_WINDOW_MS', 900000, 1000, 3600000),
+    rateGlobal: integer('RATE_LIMIT_GLOBAL', 120, 1, 1000000),
+    rateCreate: integer('RATE_LIMIT_CREATE', 30, 1, 1000000),
+    rateRead: integer('RATE_LIMIT_READ', 90, 1, 1000000),
+    rateMutation: integer('RATE_LIMIT_MUTATION', 60, 1, 1000000),
     maxStorageBytes: integer('MAX_STORAGE_BYTES', 64 * 1024 * 1024, 1, 1024 * 1024 * 1024),
     secret: env.CLIPBOARD_SECRET || crypto.randomBytes(32).toString('hex'),
     allowedOrigins: new Set(origins),

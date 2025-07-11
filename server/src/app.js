@@ -6,7 +6,7 @@ const { noStore } = require('./http/cache');
 const { createError } = require('./rooms/errors');
 const cors = require('cors');
 const express = require('express');
-const rateLimit = require('express-rate-limit');
+const { createRatePolicies } = require('./http/rate-limits');
 const helmet = require('helmet');
 
 
@@ -14,9 +14,11 @@ function createApp({ config = loadConfig(), repository } = {}) {
 const app = express();
 const { allowedOrigins } = config;
 const service = createRoomService({ config, repository });
+const policies = createRatePolicies(config);
 
 app.disable('x-powered-by');
 app.disable('etag');
+app.set('trust proxy', config.trustProxy);
 app.use(noStore);
 app.use(
   helmet({
@@ -39,30 +41,15 @@ app.use(
   })
 );
 app.use(express.json({ limit: '64kb' }));
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 120,
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-  })
-);
-
-const createRoomLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 30,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-});
-
-registerRoutes(app, { service, createRoomLimiter });
+app.use('/api/rooms', policies.global);
+registerRoutes(app, { service, createRoomLimiter: policies.create, readLimiter: policies.read, mutationLimiter: policies.mutation });
 
 app.use(notFound);
 app.use(errorHandler);
 
 app.locals.cleanupExpiredRooms = service.cleanupExpiredRooms;
 app.locals.roomService = service;
-app.locals.dispose = service.dispose;
+app.locals.dispose = () => { policies.dispose(); service.dispose(); };
 return app;
 }
 module.exports = { createApp };
