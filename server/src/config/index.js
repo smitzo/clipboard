@@ -48,6 +48,8 @@ function loadConfig(env = process.env) {
     rateCreate: integer('RATE_LIMIT_CREATE', 30, 1, 1000000),
     rateRead: integer('RATE_LIMIT_READ', 90, 1, 1000000),
     rateMutation: integer('RATE_LIMIT_MUTATION', 60, 1, 1000000),
+    shutdownTimeoutMs: integer('SHUTDOWN_TIMEOUT_MS', 5000, 10, 60000),
+    requestTimeoutMs: integer('REQUEST_TIMEOUT_MS', 20000, 100, 120000),
     maxStorageBytes: integer('MAX_STORAGE_BYTES', 64 * 1024 * 1024, 1, 1024 * 1024 * 1024),
     secret: env.CLIPBOARD_SECRET || crypto.randomBytes(32).toString('hex'),
     allowedOrigins: new Set(origins),

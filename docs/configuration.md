@@ -28,6 +28,11 @@ to 120 total, 30 creates, 90 reads and 60 mutations in 900,000 ms. Limits must b
 integers 1–1,000,000 and windows 1,000–3,600,000 ms. These counters are process
 local; multiple instances do not share a global abuse budget.
 
+Shutdown drain defaults to 5,000 ms (range 10–60,000). Incoming request timeout
+defaults to 20,000 ms (100–120,000); headers use at most 15,000 ms. Node checks
+incoming deadlines at intervals up to 1,000 ms. These bound network receipt and
+shutdown waiting, not interruption of synchronous JavaScript or crypto work.
+
 Production requires an explicit encryption secret of at least 32 characters.
 Development may use a random per-process secret. Restart always loses rooms;
 providing a stable secret does not make the in-memory repository persistent.

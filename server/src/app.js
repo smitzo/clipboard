@@ -44,6 +44,10 @@ app.use(
     },
   })
 );
+app.use('/api/rooms', (req, res, next) => {
+  if (!health.ready()) return next(createError('Service is draining or unavailable.', 503, 'SERVICE_UNAVAILABLE'));
+  next();
+});
 app.use('/api/rooms', policies.global);
 app.use(express.json({ limit: '64kb' }));
 registerRoutes(app, { service, health, createRoomLimiter: policies.create, readLimiter: policies.read, mutationLimiter: policies.mutation });
@@ -54,6 +58,7 @@ app.use(errorHandler);
 app.locals.cleanupExpiredRooms = service.cleanupExpiredRooms;
 app.locals.roomService = service;
 app.locals.health = health;
+app.locals.config = config;
 app.locals.dispose = () => { policies.dispose(); service.dispose(); };
 return app;
 }
