@@ -7,10 +7,12 @@ async function startServer({ app, port = 5000, host, intervalMs = 300000, schedu
  });
  const cleanup = createCleanupRunner(app.locals.cleanupExpiredRooms);
  const timer = schedule(cleanup.run, intervalMs); timer.unref?.();
+ app.locals.health.markReady();
  let stopping;
  function stop() {
   if (!stopping) {
    cancel(timer);
+   app.locals.health.beginDrain();
    cleanup.dispose();
    stopping = new Promise((resolve, reject) => server.close(error => {
     app.locals.dispose();

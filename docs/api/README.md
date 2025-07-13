@@ -6,6 +6,8 @@ one can read, update or delete that room. CORS does not authenticate clients.
 | Method and path | Success | Contract |
 | --- | --- | --- |
 | GET `/health` | 200 | `ok`, aggregate room count and safe limits |
+| GET `/live` | 200 | Process listener can answer; only `{ok: true}` |
+| GET `/ready` | 200 or 503 | Initialized dependencies and accepting work; generic `NOT_READY` failure |
 | GET `/capabilities` | 200 | Minimum/default/maximum TTL and maximum text length |
 | POST `/rooms` | 201 | Create from `{text, ttlMinutes?}`; metadata and ETag |
 | GET `/rooms/:roomId` | 200 | Metadata, exact text and ETag |
@@ -43,3 +45,8 @@ return JSON 429 `RATE_LIMITED` with `Retry-After`; capacity failures use retryab
 503 `CAPACITY_EXCEEDED`. Security, CORS (for allowed origins) and no-store
 headers remain present on these failures. The aggregate room budget runs before
 body parsing so malformed bodies still consume request budget.
+
+Liveness does not establish available room capacity. Readiness becomes healthy
+only after listener and cleanup ownership exist, and becomes unavailable during
+drain or dependency failure. Neither dedicated probe reveals rooms, limits or
+failure details; legacy health fields remain available for existing clients.
