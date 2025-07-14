@@ -104,7 +104,12 @@ MAX_TEXT_CHARS=20000
 - `MAX_TTL_MINUTES`: maximum allowed room lifetime.
 - `MAX_TEXT_CHARS`: maximum text length per room.
 
-Use a real secret in production. If `CLIPBOARD_SECRET` is missing, the server creates a random secret on startup, which means existing rooms cannot be decrypted after restart.
+Production startup requires `NODE_ENV=production` and an explicit random
+`CLIPBOARD_SECRET` of at least 32 characters. Development creates a random secret
+if it is omitted. Rooms disappear on every restart, even with a stable secret.
+The example environment also exposes room/byte capacity, cleanup batch, collision
+retry, proxy trust, rate and timeout settings. Defaults, ranges and engineering
+consequences are described in [configuration constraints](docs/configuration.md).
 
 ## Frontend Setup
 
@@ -208,7 +213,7 @@ limits and measures bounded cleanup. Reports go to ignored `artifacts/`.
 ```bash
 npm run dev      # start API with node --watch
 npm start        # start API
-npm test         # syntax check server.js
+npm test         # domain, storage, HTTP and process regressions
 ```
 
 ### Client
@@ -217,6 +222,7 @@ npm test         # syntax check server.js
 npm run dev      # start Vite dev server
 npm run build    # production build
 npm run lint     # eslint
+npm test         # component behavior tests
 npm run preview  # preview production build
 ```
 

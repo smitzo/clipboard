@@ -9,7 +9,6 @@ bias. Collision retries are finite and never replace an existing room.
 Transport, storage encryption, abuse limits and diagnostics have distinct trust
 boundaries. The server receives and decrypts plaintext. AES-GCM is server-side
 encryption and does not protect content from the process or its operator.
-Further implemented controls are recorded here as the security phase proceeds.
 
 Production requires an explicit secret of at least 32 characters; development
 may generate one per process, but an explicitly blank secret is invalid.
@@ -49,3 +48,36 @@ IDs and secrets are excluded; aborted responses are classified as 499. Logger
 failures cannot block response completion. Bootstrap writes JSON events to its
 output stream without retaining a history in the app. Collection/retention of
 that stream is an external responsibility and has no verified retention policy.
+
+## Trust boundaries and verification
+
+```mermaid
+flowchart LR
+    Browser[Browser draft and bearer link] -->|HTTPS required externally| Edge[Transport and forwarding boundary]
+    Edge -->|HTTP JSON| API[Validated API / rate and origin policies]
+    API --> Service[Expiry / revisions / admission]
+    Service --> Cipher[AES-GCM / process secret]
+    Cipher --> Store[Encrypted ephemeral repository]
+    API -->|Allowlisted fields only| Logs[Diagnostic stream]
+```
+
+| Threat | Implemented control | Executable evidence |
+| --- | --- | --- |
+| Biased IDs or collision loops | Unbiased crypto sampling; finite retries | `room-id.test.cjs`, `service.test.cjs` |
+| Tampered records or error leakage | GCM authentication; generic 500; sanitized parser errors | `cipher.test.cjs`, `crypto-failure.test.cjs`, `errors.test.cjs` |
+| Cached room data | No-store on success/failure; no conditional GET reuse | `security-http.test.cjs` |
+| Cross-origin browser access | Validated exact origins and deliberate preflight | `security-http.test.cjs` |
+| Forged proxy address and abuse | Explicit proxy trust; aggregate and route budgets | `rate-limits.test.cjs` |
+| Bearer data in diagnostics | Generated correlation IDs and six-field events | `diagnostics.test.cjs` |
+| Unbounded retained rooms or stale expiry | Dual admission limits; indexed batched cleanup | `storage.test.cjs`, `churn.test.cjs`, `cleanup.test.cjs` |
+| New work during shutdown | Readiness/drain gate and socket deadline | `health.test.cjs`, `drain.test.cjs` |
+
+These checks run locally. They do not prove remote TLS, trusted proxy topology,
+host access restrictions, infrastructure log redaction or manual device privacy.
+The process remains a trusted plaintext boundary, bearer access has no distinct
+owner privilege, and stolen links cannot be selectively revoked apart from
+deleting the room. Rate-limit counters are per-IP/process and do not constitute
+a distributed abuse defense; their transient key cardinality is not part of
+the room retained-byte budget. External log-retention behavior is unknown.
+See [privacy lifecycle](privacy.md) and
+[failure semantics](../reliability/failure-model.md) for retention and recovery.

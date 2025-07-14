@@ -12,6 +12,9 @@ contracts and measured tradeoffs. Local commands belong in the [project README](
 | [Backend boundaries](architecture/backend-boundaries.md) | App, service, repository and lifecycle ownership | Implemented extraction |
 | [Room API contract](api/README.md) | Corrected room semantics and legacy compatibility | Local HTTP and deterministic clock evidence |
 | [Resource bounds](reliability/resource-bounds.md) | Admission accounting, indexed expiry and cleanup ownership | Implemented; local sizing evidence |
+| [Threat model](security/threat-model.md) | Bearer trust, crypto, origin/rate controls and evidence | Local controls verified; external boundaries explicit |
+| [Privacy lifecycle](security/privacy.md) | Plaintext, bearer links, retention and erasure limits | Implemented data lifecycle and external assumptions |
+| [Failure model](reliability/failure-model.md) | Readiness, draining, restart loss and uncertain mutations | Local lifecycle and real-process evidence |
 
 Local OpenSpec artifacts live in `openspec/changes/refactor-clipboard/` and are
 intentionally ignored by Git. The complete roadmap and reusable technical docs
