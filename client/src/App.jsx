@@ -14,9 +14,8 @@ import Home from "./components/Home";
 import LinkDisplay from "./components/LinkDisplay";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+import { API_BASE_URL } from "./config";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const TTL_OPTIONS = [
   { label: "15 min", value: 15 },
   { label: "1 hour", value: 60 },
