@@ -14,7 +14,7 @@ import Home from "./components/Home";
 import LinkDisplay from "./components/LinkDisplay";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import { API_BASE_URL } from "./config";
+import { api } from "./api";
 
 const TTL_OPTIONS = [
   { label: "15 min", value: 15 },
@@ -38,23 +38,6 @@ function normalizeRoomInput(value) {
   } catch {
     return trimmedValue;
   }
-}
-
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  });
-  const data = response.status === 204 ? null : await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.message || "Request failed.");
-  }
-
-  return data;
 }
 
 function App() {
@@ -123,10 +106,7 @@ function App() {
     setStatus({ type: "idle", message: "" });
 
     try {
-      const createdRoom = await request("/rooms", {
-        method: "POST",
-        body: JSON.stringify({ text: clipboardText, ttlMinutes }),
-      });
+      const createdRoom = await api.create(clipboardText, ttlMinutes);
 
       setRoom(createdRoom);
       setClipboardText(clipboardText.trimEnd());
@@ -178,9 +158,7 @@ function App() {
     }
 
     try {
-      const fetchedRoom = await request(
-        `/rooms/${encodeURIComponent(normalizedRoomId)}`,
-      );
+      const fetchedRoom = await api.read(normalizedRoomId);
 
       lastFetchedRoomId.current = normalizedRoomId;
       setRoom(fetchedRoom);
@@ -242,13 +220,7 @@ function App() {
     setStatus({ type: "idle", message: "" });
 
     try {
-      const updatedRoom = await request(
-        `/rooms/${encodeURIComponent(room.roomId)}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({ text: clipboardText }),
-        },
-      );
+      const updatedRoom = await api.update(room.roomId, clipboardText);
 
       setRoom(updatedRoom);
       setStatus({ type: "success", message: "Room text updated." });
@@ -275,9 +247,7 @@ function App() {
     setStatus({ type: "idle", message: "" });
 
     try {
-      await request(`/rooms/${encodeURIComponent(room.roomId)}`, {
-        method: "DELETE",
-      });
+      await api.remove(room.roomId);
       setRoom(null);
       setClipboardText("");
       setJoinRoomId("");

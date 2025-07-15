@@ -9,7 +9,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('rendered room behavior', () => {
   it('creates a room from the editor and displays sharing controls', async () => {
-    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 201, json: async () => metadata });
+    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 201, text: async () => JSON.stringify(metadata) });
     vi.stubGlobal('fetch', fetch);
     const user = userEvent.setup(); render(<App />);
     await user.type(screen.getByLabelText('Text to share'), 'fixture');
@@ -21,7 +21,7 @@ describe('rendered room behavior', () => {
   });
   it('loads an initial query room into the editor', async () => {
     window.history.replaceState(null, '', `?room=${metadata.roomId}`);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ ...metadata, text: 'received fixture' }) }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => JSON.stringify({ ...metadata, charCount: 16, text: 'received fixture' }) }));
     render(<App />);
     await waitFor(() => expect(screen.getByLabelText('Text to share').value).toBe('received fixture'));
   });
