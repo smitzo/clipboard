@@ -34,8 +34,8 @@ function App() {
   const [clipboardText, setClipboardText] = useState("");
   const [joinRoomId, setJoinRoomId] = useState("");
   const [ttlMinutes, setTtlMinutes] = useState(60);
-  const [{ room, loading }, dispatch] = useReducer(roomReducer, initialRoomState);
-  const setRoom = useCallback(room => dispatch({ type: room ? 'confirmed' : 'deleted', room }), []);
+  const [{ room, savedText, loading }, dispatch] = useReducer(roomReducer, initialRoomState);
+  const setRoom = useCallback((room, text = '') => dispatch({ type: room ? 'confirmed' : 'deleted', room, text }), []);
   const setLoading = useCallback(operation => dispatch({ type: operation ? 'begin' : 'settled', operation }), []);
   const [qrCode, setQrCode] = useState("");
   const [status, setStatus] = useState({ type: "idle", message: "" });
@@ -50,6 +50,7 @@ function App() {
   }, [room?.roomId]);
 
   const isBusy = Boolean(loading);
+  const isDirty = clipboardText !== savedText;
 
   useEffect(() => {
     if (!roomLink) {
@@ -99,8 +100,7 @@ function App() {
     try {
       const createdRoom = await api.create(clipboardText, ttlMinutes);
 
-      setRoom(createdRoom);
-      setClipboardText(clipboardText.trimEnd());
+      setRoom(createdRoom, clipboardText);
       setJoinRoomId(createdRoom.roomId);
       setStatus({
         type: "success",
@@ -152,7 +152,7 @@ function App() {
       const fetchedRoom = await api.read(normalizedRoomId);
 
       lastFetchedRoomId.current = normalizedRoomId;
-      setRoom(fetchedRoom);
+      setRoom(fetchedRoom, fetchedRoom.text);
       setClipboardText(fetchedRoom.text);
       setJoinRoomId(fetchedRoom.roomId);
       setStatus({
@@ -211,7 +211,7 @@ function App() {
     try {
       const updatedRoom = await api.update(room.roomId, clipboardText);
 
-      setRoom(updatedRoom);
+      setRoom(updatedRoom, clipboardText);
       setStatus({ type: "success", message: "Room text updated." });
     } catch (error) {
       setStatus({ type: "error", message: getErrorMessage(error) });
@@ -311,7 +311,7 @@ function App() {
               <div className="mt-4 flex justify-between gap-3 text-sm text-[#75827a] [&>span:last-child]:whitespace-nowrap max-[960px]:flex-col max-[960px]:gap-1 min-[521px]:max-[760px]:flex-row">
                 <span id="editor-hint">
                   {room
-                    ? "Changes are saved when you update the room."
+                    ? (isDirty ? "Changes are saved when you update the room." : "Text matches the last confirmed save.")
                     : "Your text is shared only after you create a room."}
                 </span>
                 <span>{clipboardText.length.toLocaleString()} characters</span>

@@ -35,4 +35,14 @@ describe('rendered room behavior', () => {
     expect(screen.getByRole('button', { name: 'Create room' }).disabled).toBe(false);
     expect(screen.queryByRole('button', { name: 'Delete room' })).toBeNull();
   });
+  it('keeps exact draft text separate from the last confirmed save', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => new Response(JSON.stringify(metadata), { status: 201 })));
+    const user = userEvent.setup(); render(<App />);
+    await user.type(screen.getByLabelText('Text to share'), 'fixture{Enter} ');
+    await user.click(screen.getByRole('button', { name: 'Create room' }));
+    await screen.findByText('Text matches the last confirmed save.');
+    expect(screen.getByLabelText('Text to share').value).toBe('fixture\n ');
+    await user.type(screen.getByLabelText('Text to share'), 'new edit');
+    expect(screen.getByText('Changes are saved when you update the room.')).toBeTruthy();
+  });
 });

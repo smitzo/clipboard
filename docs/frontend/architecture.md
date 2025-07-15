@@ -21,5 +21,9 @@ share links include only the room parameter so unrelated URL data is not shared.
 Room metadata, pending operation and draft/active/deleted phases now transition
 through a reducer. A failed mutation retains the prior room and draft. App still
 owns request orchestration and editor/join presentation at this boundary.
+Editable text is independent from the confirmed snapshot held with room metadata.
+Dirty state compares those exact strings. Creating a room no longer trims the
+editor, matching the corrected server fidelity contract; edits become confirmed
+only after a successful save. No browser persistence is introduced.
 The following roadmap extraction moves each responsibility behind a tested
 adapter/controller or feature contract; those extractions are not yet claimed.
