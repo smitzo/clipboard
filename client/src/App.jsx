@@ -15,6 +15,7 @@ import LinkDisplay from "./components/LinkDisplay";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import { api } from "./api";
+import { normalizeRoomInput, ROOM_ID_PATTERN, roomLink as buildRoomLink, roomIdFromLocation, withRoomId } from "./room-location";
 
 const TTL_OPTIONS = [
   { label: "15 min", value: 15 },
@@ -22,22 +23,10 @@ const TTL_OPTIONS = [
   { label: "6 hours", value: 360 },
   { label: "24 hours", value: 1440 },
 ];
-const ROOM_ID_PATTERN = /^[A-Za-z0-9]{8,32}$/;
 const AUTO_JOIN_MIN_LENGTH = 12;
 
 function getErrorMessage(error) {
   return error?.message || "Something went wrong. Please try again.";
-}
-
-function normalizeRoomInput(value) {
-  const trimmedValue = value.trim();
-
-  try {
-    const url = new URL(trimmedValue);
-    return url.searchParams.get("room") || trimmedValue;
-  } catch {
-    return trimmedValue;
-  }
 }
 
 function App() {
@@ -55,7 +44,7 @@ function App() {
   const roomLink = useMemo(() => {
     if (!room?.roomId) return "";
 
-    return `${window.location.origin}${window.location.pathname}?room=${room.roomId}`;
+    return buildRoomLink(window.location.href, room.roomId);
   }, [room?.roomId]);
 
   const isBusy = Boolean(loading);
@@ -115,7 +104,7 @@ function App() {
         type: "success",
         message: "Room created. Share the ID, link, or QR code.",
       });
-      window.history.replaceState(null, "", `?room=${createdRoom.roomId}`);
+      window.history.replaceState(null, "", withRoomId(window.location.href, createdRoom.roomId));
     } catch (error) {
       setStatus({ type: "error", message: getErrorMessage(error) });
     } finally {
@@ -168,7 +157,7 @@ function App() {
         type: "success",
         message: "Room loaded into the clipboard.",
       });
-      window.history.replaceState(null, "", `?room=${fetchedRoom.roomId}`);
+      window.history.replaceState(null, "", withRoomId(window.location.href, fetchedRoom.roomId));
     } catch (error) {
       lastFetchedRoomId.current = "";
       setStatus({ type: "error", message: getErrorMessage(error) });
@@ -197,9 +186,7 @@ function App() {
   }, [fetchRoom, joinRoomId, room?.roomId]);
 
   useEffect(() => {
-    const roomIdFromUrl = new URLSearchParams(window.location.search).get(
-      "room",
-    );
+    const roomIdFromUrl = roomIdFromLocation(window.location.href);
 
     if (roomIdFromUrl) {
       setJoinRoomId(roomIdFromUrl);
@@ -255,7 +242,7 @@ function App() {
       lastFetchedRoomId.current = "";
       pendingRoomId.current = "";
       setStatus({ type: "success", message: "Room deleted from the server." });
-      window.history.replaceState(null, "", window.location.pathname);
+      window.history.replaceState(null, "", withRoomId(window.location.href, null));
     } catch (error) {
       setStatus({ type: "error", message: getErrorMessage(error) });
     } finally {

@@ -13,6 +13,11 @@ revision metadata and read text fidelity while allowing compatible extra fields.
 Deletion accepts an empty 204. Non-JSON failures produce a generic error without
 echoing the response body; structured errors retain status, code and retry hints.
 
+Pure room-location helpers own case-sensitive IDs and HTTP(S) query links.
+Duplicate room parameters, invalid encodings and unsupported path-only links are
+rejected. Navigation updates preserve unrelated query/fragment state; generated
+share links include only the room parameter so unrelated URL data is not shared.
+
 App still owns room state and editor/join presentation at this boundary.
 The following roadmap extraction moves each responsibility behind a tested
 adapter/controller or feature contract; those extractions are not yet claimed.
