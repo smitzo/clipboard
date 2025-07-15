@@ -25,4 +25,14 @@ describe('rendered room behavior', () => {
     render(<App />);
     await waitFor(() => expect(screen.getByLabelText('Text to share').value).toBe('received fixture'));
   });
+  it('retains the draft and roomless controls when creation fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 'CAPACITY_EXCEEDED', message: 'Try again shortly.' }), { status: 503 })));
+    const user = userEvent.setup(); render(<App />);
+    await user.type(screen.getByLabelText('Text to share'), 'preserved fixture');
+    await user.click(screen.getByRole('button', { name: 'Create room' }));
+    await screen.findByRole('alert');
+    expect(screen.getByLabelText('Text to share').value).toBe('preserved fixture');
+    expect(screen.getByRole('button', { name: 'Create room' }).disabled).toBe(false);
+    expect(screen.queryByRole('button', { name: 'Delete room' })).toBeNull();
+  });
 });

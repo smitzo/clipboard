@@ -18,6 +18,8 @@ Duplicate room parameters, invalid encodings and unsupported path-only links are
 rejected. Navigation updates preserve unrelated query/fragment state; generated
 share links include only the room parameter so unrelated URL data is not shared.
 
-App still owns room state and editor/join presentation at this boundary.
+Room metadata, pending operation and draft/active/deleted phases now transition
+through a reducer. A failed mutation retains the prior room and draft. App still
+owns request orchestration and editor/join presentation at this boundary.
 The following roadmap extraction moves each responsibility behind a tested
 adapter/controller or feature contract; those extractions are not yet claimed.

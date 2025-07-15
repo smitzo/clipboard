@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import QRCode from "qrcode";
 import {
   Check,
@@ -16,6 +16,7 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import { api } from "./api";
 import { normalizeRoomInput, ROOM_ID_PATTERN, roomLink as buildRoomLink, roomIdFromLocation, withRoomId } from "./room-location";
+import { initialRoomState, roomReducer } from "./room-state";
 
 const TTL_OPTIONS = [
   { label: "15 min", value: 15 },
@@ -33,10 +34,11 @@ function App() {
   const [clipboardText, setClipboardText] = useState("");
   const [joinRoomId, setJoinRoomId] = useState("");
   const [ttlMinutes, setTtlMinutes] = useState(60);
-  const [room, setRoom] = useState(null);
+  const [{ room, loading }, dispatch] = useReducer(roomReducer, initialRoomState);
+  const setRoom = useCallback(room => dispatch({ type: room ? 'confirmed' : 'deleted', room }), []);
+  const setLoading = useCallback(operation => dispatch({ type: operation ? 'begin' : 'settled', operation }), []);
   const [qrCode, setQrCode] = useState("");
   const [status, setStatus] = useState({ type: "idle", message: "" });
-  const [loading, setLoading] = useState("");
   const [copied, setCopied] = useState("");
   const lastFetchedRoomId = useRef("");
   const pendingRoomId = useRef("");
@@ -165,7 +167,7 @@ function App() {
       pendingRoomId.current = "";
       setLoading("");
     }
-  }, []);
+  }, [setRoom, setLoading]);
 
   useEffect(() => {
     const normalizedRoomId = normalizeRoomInput(joinRoomId);
