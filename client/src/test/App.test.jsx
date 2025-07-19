@@ -25,6 +25,15 @@ describe('rendered room behavior', () => {
     render(<App />);
     await waitFor(() => expect(screen.getByLabelText('Text to share').value).toBe('received fixture'));
   });
+  it('loads a manually submitted room link through the same join path', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ...metadata, text: 'fixture' })));
+    vi.stubGlobal('fetch', fetch);
+    const user = userEvent.setup(); render(<App />);
+    await user.type(screen.getByLabelText('Room ID or link'), `https://clipboard.invalid/?room=${metadata.roomId}`);
+    await user.click(screen.getByRole('button', { name: 'Join', exact: true }));
+    await waitFor(() => expect(screen.getByLabelText('Text to share').value).toBe('fixture'));
+    expect(fetch.mock.calls[0][0]).toMatch(new RegExp(`/rooms/${metadata.roomId}$`));
+  });
   it('retains the draft and roomless controls when creation fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 'CAPACITY_EXCEEDED', message: 'Try again shortly.' }), { status: 503 })));
     const user = userEvent.setup(); render(<App />);

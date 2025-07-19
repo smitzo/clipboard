@@ -29,5 +29,9 @@ only after a successful save. No browser persistence is introduced.
 `features/editor/ClipboardEditor.jsx` owns editor, expiry and mutation controls.
 Its explicit props contain editable text, metadata, dirty/pending state and
 callbacks. It performs no fetch, URL mutation or browser sharing operation.
+
+`features/join/JoinRoom.jsx` owns the labelled join input and native form. Manual,
+query-link and automatic joins share parsing and orchestration; the panel owns
+no room state or independent request path.
 The following roadmap extraction moves each responsibility behind a tested
 adapter/controller or feature contract; those extractions are not yet claimed.
