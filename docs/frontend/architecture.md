@@ -25,5 +25,9 @@ Editable text is independent from the confirmed snapshot held with room metadata
 Dirty state compares those exact strings. Creating a room no longer trims the
 editor, matching the corrected server fidelity contract; edits become confirmed
 only after a successful save. No browser persistence is introduced.
+
+`features/editor/ClipboardEditor.jsx` owns editor, expiry and mutation controls.
+Its explicit props contain editable text, metadata, dirty/pending state and
+callbacks. It performs no fetch, URL mutation or browser sharing operation.
 The following roadmap extraction moves each responsibility behind a tested
 adapter/controller or feature contract; those extractions are not yet claimed.
