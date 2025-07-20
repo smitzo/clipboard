@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import QRCode from "qrcode";
+import { sharing } from './sharing';
 import { Check } from 'lucide-react';
 import ClipboardEditor from './features/editor/ClipboardEditor';
 import JoinRoom from './features/join/JoinRoom';
@@ -45,14 +45,7 @@ function App() {
       return;
     }
 
-    QRCode.toDataURL(roomLink, {
-      margin: 1,
-      width: 220,
-      color: {
-        dark: "#111827",
-        light: "#ffffff",
-      },
-    }).then(setQrCode);
+    sharing.qr(roomLink).then(setQrCode).catch(() => setStatus({ type: 'error', message: 'Could not generate the QR code. The room link still works.' }));
   }, [roomLink]);
 
   useEffect(() => {
@@ -69,7 +62,7 @@ function App() {
     if (!value) return;
 
     try {
-      await navigator.clipboard.writeText(value);
+      await sharing.copy(value);
       setCopied(label);
       setTimeout(() => setCopied(""), 1800);
     } catch {
@@ -242,10 +235,7 @@ function App() {
   function downloadQrCode() {
     if (!qrCode) return;
 
-    const anchor = document.createElement("a");
-    anchor.href = qrCode;
-    anchor.download = `${room?.roomId || "clipboard-room"}-qr.png`;
-    anchor.click();
+    sharing.downloadQr(qrCode, room?.roomId);
   }
 
   return (
