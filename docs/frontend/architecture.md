@@ -37,5 +37,10 @@ no room state or independent request path.
 Browser sharing is behind injectable clipboard, QR and download adapters. QR
 payloads contain the current share link, downloads use generated PNG data URLs,
 and unsupported/denied operations reject without an uncontrolled promise error.
+
+`useFeedback` owns copy results, notices and their timers. Later copies invalidate
+earlier completions, replacement notices reset their lifetime, and unmount
+cancels timers and invalidates in-flight feedback. One live presentation renders
+these results; the adapters do not create independent notifications.
 The following roadmap extraction moves each responsibility behind a tested
 adapter/controller or feature contract; those extractions are not yet claimed.

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useFeedback } from './useFeedback';
 import { sharing } from './sharing';
 import { Check } from 'lucide-react';
 import ClipboardEditor from './features/editor/ClipboardEditor';
@@ -25,8 +26,7 @@ function App() {
   const setRoom = useCallback((room, text = '') => dispatch({ type: room ? 'confirmed' : 'deleted', room, text }), []);
   const setLoading = useCallback(operation => dispatch({ type: operation ? 'begin' : 'settled', operation }), []);
   const [qrCode, setQrCode] = useState("");
-  const [status, setStatus] = useState({ type: "idle", message: "" });
-  const [copied, setCopied] = useState("");
+  const { status, setStatus, copied, copyValue } = useFeedback();
   const lastFetchedRoomId = useRef("");
   const pendingRoomId = useRef("");
 
@@ -46,32 +46,7 @@ function App() {
     }
 
     sharing.qr(roomLink).then(setQrCode).catch(() => setStatus({ type: 'error', message: 'Could not generate the QR code. The room link still works.' }));
-  }, [roomLink]);
-
-  useEffect(() => {
-    if (!status.message) return undefined;
-
-    const timeout = setTimeout(() => {
-      setStatus({ type: "idle", message: "" });
-    }, 3200);
-
-    return () => clearTimeout(timeout);
-  }, [status.message]);
-
-  async function copyValue(value, label) {
-    if (!value) return;
-
-    try {
-      await sharing.copy(value);
-      setCopied(label);
-      setTimeout(() => setCopied(""), 1800);
-    } catch {
-      setStatus({
-        type: "error",
-        message: "Could not copy. Please select and copy the text manually.",
-      });
-    }
-  }
+  }, [roomLink, setStatus]);
 
   async function createRoom() {
     setLoading("create");
@@ -147,7 +122,7 @@ function App() {
       pendingRoomId.current = "";
       setLoading("");
     }
-  }, [setRoom, setLoading]);
+  }, [setRoom, setLoading, setStatus]);
 
   useEffect(() => {
     const normalizedRoomId = normalizeRoomInput(joinRoomId);
