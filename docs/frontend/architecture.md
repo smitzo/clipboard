@@ -64,6 +64,12 @@ flowchart TD
 ```
 
 This extraction preserves explicit-save behavior and current presentation.
-Request cancellation, operation identities, dirty-room switching, conflict
+Operation identities, dirty-room switching, conflict
 recovery and browser navigation reconciliation remain subsequent reliability
 work. Structural separation alone does not establish race safety.
+
+## Implemented async guarantees
+
+Each room read owns an AbortController and a task identity. Superseding a read
+aborts it, and late success/error/finally work is ignored unless that identity
+is still current. Unmount aborts the active read and invalidates its identity.

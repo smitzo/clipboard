@@ -19,6 +19,8 @@ export function useRoomController() {
   const { status, setStatus, copied, copyValue } = useFeedback();
   const lastFetchedRoomId = useRef("");
   const pendingRoomId = useRef("");
+  const readTask = useRef(null);
+  useEffect(() => () => { readTask.current?.controller.abort(); readTask.current = null; }, []);
 
   const roomLink = useMemo(() => {
     if (!room?.roomId) return "";
@@ -87,6 +89,9 @@ export function useRoomController() {
       return;
     }
 
+    readTask.current?.controller.abort();
+    const task = { id: normalizedRoomId, controller: new AbortController() };
+    readTask.current = task;
     pendingRoomId.current = normalizedRoomId;
     setLoading("join");
     if (!options.silent) {
@@ -94,7 +99,8 @@ export function useRoomController() {
     }
 
     try {
-      const fetchedRoom = await api.read(normalizedRoomId);
+      const fetchedRoom = await api.read(normalizedRoomId, { signal: task.controller.signal });
+      if (readTask.current !== task) return;
 
       lastFetchedRoomId.current = normalizedRoomId;
       setRoom(fetchedRoom, fetchedRoom.text);
@@ -106,11 +112,15 @@ export function useRoomController() {
       });
       window.history.replaceState(null, "", withRoomId(window.location.href, fetchedRoom.roomId));
     } catch (error) {
+      if (readTask.current !== task || task.controller.signal.aborted) return;
       lastFetchedRoomId.current = "";
       setStatus({ type: "error", message: getErrorMessage(error) });
     } finally {
-      pendingRoomId.current = "";
-      setLoading("");
+      if (readTask.current === task) {
+        readTask.current = null;
+        pendingRoomId.current = "";
+        setLoading("");
+      }
     }
   }, [setRoom, setLoading, setStatus]);
 
