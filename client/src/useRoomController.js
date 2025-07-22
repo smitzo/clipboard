@@ -213,9 +213,15 @@ export function useRoomController() {
     sharing.downloadQr(qrCode, room?.roomId);
   }
 
+  function cancelJoin() {
+    readTask.current?.controller.abort(); readTask.current = null;
+    pendingRoomId.current = ''; setLoading('');
+    setStatus({ type: 'success', message: 'Join cancelled. Your draft is unchanged.' });
+  }
+
   return {
     editor: { room, clipboardText, setClipboardText, isDirty, ttlMinutes, setTtlMinutes, isBusy, loading, saveClipboard, copied, copyValue, deleteRoom },
-    join: { joinRoomId, setJoinRoomId, fetchRoom, loading, isBusy },
+    join: { joinRoomId, setJoinRoomId, fetchRoom, cancelJoin, loading, isBusy },
     share: { room, roomLink, qrCode, copied, onCopy: copyValue, onDownload: downloadQrCode },
     feedback: { status, copied },
   };

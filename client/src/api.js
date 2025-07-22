@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config';
+import { withRequestDeadline } from './request-deadline';
 
 export class ApiError extends Error {
   constructor(message, { status = 0, code = 'REQUEST_FAILED', retryAfter = null } = {}) {
@@ -17,15 +18,17 @@ function validateRoom(data, includeText) {
   return data;
 }
 
-export function createApi({ baseUrl = API_BASE_URL, fetchImpl = (...args) => fetch(...args) } = {}) {
-  async function request(path, { headers, ...options } = {}) {
+export function createApi({ baseUrl = API_BASE_URL, fetchImpl = (...args) => fetch(...args), timeoutMs = 15000 } = {}) {
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) throw new Error('Invalid request deadline.');
+  async function request(path, { headers, signal, ...options } = {}) {
+   return withRequestDeadline(async activeSignal => {
     const response = await fetchImpl(`${baseUrl}${path}`, {
-      ...options, headers: { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...headers },
+      ...options, signal: activeSignal, headers: { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...headers },
     });
     let data = null;
     if (response.status !== 204) {
       try { data = JSON.parse(await response.text()); }
-      catch { if (response.ok) throw new ApiError('The server returned an unreadable response.', { code: 'INVALID_RESPONSE' }); }
+      catch (error) { if (activeSignal.aborted) throw error; if (response.ok) throw new ApiError('The server returned an unreadable response.', { code: 'INVALID_RESPONSE' }); }
     }
     if (!response.ok) {
       throw new ApiError(typeof data?.message === 'string' ? data.message : 'The server could not complete this request.', {
@@ -34,6 +37,7 @@ export function createApi({ baseUrl = API_BASE_URL, fetchImpl = (...args) => fet
       });
     }
     return data;
+   }, { signal, timeoutMs, errorFactory: (message, code) => new ApiError(message, { code }) });
   }
   return {
     create: async (text, ttlMinutes, options) => validateRoom(await request('/rooms', { ...options, method: 'POST', body: JSON.stringify({ text, ttlMinutes }) }), false),

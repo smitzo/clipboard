@@ -1,6 +1,6 @@
 import Button from '../../components/Button';
 
-export default function JoinRoom({ joinRoomId, setJoinRoomId, fetchRoom, loading, isBusy }) {
+export default function JoinRoom({ joinRoomId, setJoinRoomId, fetchRoom, cancelJoin, loading, isBusy }) {
   return (
 <section
               className="rounded-2xl border border-[#e0e7e2] bg-white shadow-[0_3px_8px_#1c403804] p-[23px] [&>p]:mt-[5px] [&>p]:text-base [&_form]:mt-5 [&_label]:mb-2 [&_label]:block [&_label]:text-sm [&_label]:font-semibold [&_label]:text-[#566a5e] max-[960px]:p-5"
@@ -35,6 +35,7 @@ export default function JoinRoom({ joinRoomId, setJoinRoomId, fetchRoom, loading
                   </Button>
                 </div>
               </form>
+              {loading === 'join' && <Button variant="secondary" onClick={cancelJoin}>Cancel join</Button>}
             </section>
   );
 }

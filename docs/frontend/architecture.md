@@ -73,3 +73,9 @@ work. Structural separation alone does not establish race safety.
 Each room read owns an AbortController and a task identity. Superseding a read
 aborts it, and late success/error/finally work is ignored unless that identity
 is still current. Unmount aborts the active read and invalidates its identity.
+
+The API adapter owns a 15-second deadline covering fetch and body consumption.
+Every exit removes its timer and caller-abort listener. Timeout, deliberate
+cancellation and network failure have separate codes; server status/code/retry
+hints remain intact. A cancelled join retains its draft. Mutation timeout is
+uncertain completion and never implies that the server did not apply the save.
