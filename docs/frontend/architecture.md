@@ -84,3 +84,9 @@ URL, debounced and manual joins share the current room-read promise. StrictMode
 effect replay queues initial URL work until the live effect is known, avoiding a
 duplicate initial fetch. Cancelling a join suppresses automatic restart for that
 input; a deliberate manual retry can start it again.
+
+Pending state belongs to an operation identity, not a shared boolean. Mutations
+invalidate reads, duplicate mutations are blocked synchronously, and only the
+current operation may confirm metadata, report an error or clear loading.
+Unmount aborts and invalidates all active request ownership. An old read's
+finally handler cannot clear a later save or revive a deleted room.

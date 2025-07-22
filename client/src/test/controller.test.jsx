@@ -24,6 +24,24 @@ it('aborts superseded reads and ignores their late success or failure', async ()
   expect(result.current.feedback.status.type).toBe('success');
 });
 
+it('stale read finally cannot clear a newer mutation and rapid duplicate saves are not replayed', async () => {
+  const reading = deferred(); const saving = deferred();
+  vi.spyOn(api, 'read').mockReturnValue(reading.promise);
+  const create = vi.spyOn(api, 'create').mockReturnValue(saving.promise);
+  const { result } = renderHook(() => useRoomController());
+  act(() => result.current.editor.setClipboardText('save fixture'));
+  let read; let save;
+  act(() => { read = result.current.join.fetchRoom('ABCDEF123456'); });
+  act(() => { save = result.current.editor.saveClipboard(); result.current.editor.saveClipboard(); });
+  expect(create).toHaveBeenCalledTimes(1);
+  await act(async () => { reading.resolve(fixtureRoom()); await read; });
+  expect(result.current.editor.loading).toBe('create');
+  expect(result.current.editor.clipboardText).toBe('save fixture');
+  await act(async () => { saving.resolve(fixtureRoom('ZYXWVU654321', 'save fixture')); await save; });
+  expect(result.current.editor.loading).toBe('');
+  expect(result.current.editor.room.roomId).toBe('ZYXWVU654321');
+});
+
 it('deduplicates query, automatic and explicit joins including StrictMode effect replay', async () => {
   const pending = deferred(); const read = vi.spyOn(api, 'read').mockReturnValue(pending.promise);
   window.history.replaceState(null, '', '?room=ABCDEF123456');

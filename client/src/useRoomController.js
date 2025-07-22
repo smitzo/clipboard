@@ -14,14 +14,24 @@ export function useRoomController() {
   const [ttlMinutes, setTtlMinutes] = useState(60);
   const [{ room, savedText, loading }, dispatch] = useReducer(roomReducer, initialRoomState);
   const setRoom = useCallback((room, text = '') => dispatch({ type: room ? 'confirmed' : 'deleted', room, text }), []);
-  const setLoading = useCallback(operation => dispatch({ type: operation ? 'begin' : 'settled', operation }), []);
   const [qrCode, setQrCode] = useState("");
   const { status, setStatus, copied, copyValue } = useFeedback();
   const lastFetchedRoomId = useRef("");
   const pendingRoomId = useRef("");
   const readTask = useRef(null);
   const suppressedAutoId = useRef('');
-  useEffect(() => () => { readTask.current?.controller.abort(); readTask.current = null; }, []);
+  const operation = useRef(null);
+  const beginOperation = useCallback(kind => {
+    if (operation.current && operation.current.kind !== 'join') return null;
+    operation.current?.controller.abort(); readTask.current = null; pendingRoomId.current = '';
+    const task = { kind, controller: new AbortController() };
+    operation.current = task; dispatch({ type: 'begin', operation: kind }); return task;
+  }, []);
+  const finishOperation = useCallback(task => {
+    if (operation.current !== task) return;
+    operation.current = null; dispatch({ type: 'settled' });
+  }, []);
+  useEffect(() => () => { operation.current?.controller.abort(); operation.current = null; readTask.current = null; }, []);
 
   const roomLink = useMemo(() => {
     if (!room?.roomId) return "";
@@ -42,11 +52,12 @@ export function useRoomController() {
   }, [roomLink, setStatus]);
 
   async function createRoom() {
-    setLoading("create");
+    const task = beginOperation('create'); if (!task) return;
     setStatus({ type: "idle", message: "" });
 
     try {
-      const createdRoom = await api.create(clipboardText, ttlMinutes);
+      const createdRoom = await api.create(clipboardText, ttlMinutes, { signal: task.controller.signal });
+      if (operation.current !== task) return;
 
       setRoom(createdRoom, clipboardText);
       setJoinRoomId(createdRoom.roomId);
@@ -56,9 +67,10 @@ export function useRoomController() {
       });
       window.history.replaceState(null, "", withRoomId(window.location.href, createdRoom.roomId));
     } catch (error) {
+      if (operation.current !== task) return;
       setStatus({ type: "error", message: getErrorMessage(error) });
     } finally {
-      setLoading("");
+      finishOperation(task);
     }
   }
 
@@ -86,11 +98,10 @@ export function useRoomController() {
     if (options.silent && (lastFetchedRoomId.current === normalizedRoomId || suppressedAutoId.current === normalizedRoomId)) return;
     if (!options.silent) suppressedAutoId.current = '';
 
-    readTask.current?.controller.abort();
-    const task = { id: normalizedRoomId, controller: new AbortController() };
+    const task = beginOperation('join'); if (!task) return;
+    task.id = normalizedRoomId;
     readTask.current = task;
     pendingRoomId.current = normalizedRoomId;
-    setLoading("join");
     if (!options.silent) {
       setStatus({ type: "idle", message: "" });
     }
@@ -117,12 +128,12 @@ export function useRoomController() {
       if (readTask.current === task) {
         readTask.current = null;
         pendingRoomId.current = "";
-        setLoading("");
+        finishOperation(task);
       }
     }
     })();
     return task.promise;
-  }, [setRoom, setLoading, setStatus]);
+  }, [setRoom, setStatus, beginOperation, finishOperation]);
 
   useEffect(() => {
     const normalizedRoomId = normalizeRoomInput(joinRoomId);
@@ -161,18 +172,20 @@ export function useRoomController() {
       return;
     }
 
-    setLoading("update");
+    const task = beginOperation('update'); if (!task) return;
     setStatus({ type: "idle", message: "" });
 
     try {
-      const updatedRoom = await api.update(room.roomId, clipboardText);
+      const updatedRoom = await api.update(room.roomId, clipboardText, { signal: task.controller.signal });
+      if (operation.current !== task) return;
 
       setRoom(updatedRoom, clipboardText);
       setStatus({ type: "success", message: "Room text updated." });
     } catch (error) {
+      if (operation.current !== task) return;
       setStatus({ type: "error", message: getErrorMessage(error) });
     } finally {
-      setLoading("");
+      finishOperation(task);
     }
   }
 
@@ -188,11 +201,12 @@ export function useRoomController() {
   async function deleteRoom() {
     if (!room?.roomId) return;
 
-    setLoading("delete");
+    const task = beginOperation('delete'); if (!task) return;
     setStatus({ type: "idle", message: "" });
 
     try {
-      await api.remove(room.roomId);
+      await api.remove(room.roomId, { signal: task.controller.signal });
+      if (operation.current !== task) return;
       setRoom(null);
       setClipboardText("");
       setJoinRoomId("");
@@ -202,9 +216,10 @@ export function useRoomController() {
       setStatus({ type: "success", message: "Room deleted from the server." });
       window.history.replaceState(null, "", withRoomId(window.location.href, null));
     } catch (error) {
+      if (operation.current !== task) return;
       setStatus({ type: "error", message: getErrorMessage(error) });
     } finally {
-      setLoading("");
+      finishOperation(task);
     }
   }
 
@@ -216,8 +231,9 @@ export function useRoomController() {
 
   function cancelJoin() {
     suppressedAutoId.current = readTask.current?.id || normalizeRoomInput(joinRoomId);
-    readTask.current?.controller.abort(); readTask.current = null;
-    pendingRoomId.current = ''; setLoading('');
+    const task = readTask.current;
+    task?.controller.abort(); readTask.current = null;
+    pendingRoomId.current = ''; if (task) finishOperation(task);
     setStatus({ type: 'success', message: 'Join cancelled. Your draft is unchanged.' });
   }
 
