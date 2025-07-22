@@ -6,10 +6,11 @@ export function useFeedback({ copy = sharing.copy } = {}) {
   const [copied, setCopied] = useState('');
   const copyTimer = useRef(); const generation = useRef(0); const mounted = useRef(true);
   const setStatus = useCallback(value => { if (mounted.current) updateStatus(value); }, []);
+  const invalidate = useCallback(() => { generation.current++; clearTimeout(copyTimer.current); }, []);
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; generation.current++; clearTimeout(copyTimer.current); };
-  }, []);
+    return () => { mounted.current = false; invalidate(); };
+  }, [invalidate]);
   useEffect(() => {
     if (!status.message) return;
     const timer = setTimeout(() => updateStatus({ type: 'idle', message: '' }), 3200);

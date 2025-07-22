@@ -1,0 +1,212 @@
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { api } from './api';
+import { sharing } from './sharing';
+import { useFeedback } from './useFeedback';
+import { initialRoomState, roomReducer } from './room-state';
+import { normalizeRoomInput, ROOM_ID_PATTERN, roomLink as buildRoomLink, roomIdFromLocation, withRoomId } from './room-location';
+
+const AUTO_JOIN_MIN_LENGTH = 12;
+const getErrorMessage = error => error?.message || 'Something went wrong. Please try again.';
+
+export function useRoomController() {
+  const [clipboardText, setClipboardText] = useState("");
+  const [joinRoomId, setJoinRoomId] = useState("");
+  const [ttlMinutes, setTtlMinutes] = useState(60);
+  const [{ room, savedText, loading }, dispatch] = useReducer(roomReducer, initialRoomState);
+  const setRoom = useCallback((room, text = '') => dispatch({ type: room ? 'confirmed' : 'deleted', room, text }), []);
+  const setLoading = useCallback(operation => dispatch({ type: operation ? 'begin' : 'settled', operation }), []);
+  const [qrCode, setQrCode] = useState("");
+  const { status, setStatus, copied, copyValue } = useFeedback();
+  const lastFetchedRoomId = useRef("");
+  const pendingRoomId = useRef("");
+
+  const roomLink = useMemo(() => {
+    if (!room?.roomId) return "";
+
+    return buildRoomLink(window.location.href, room.roomId);
+  }, [room?.roomId]);
+
+  const isBusy = Boolean(loading);
+  const isDirty = clipboardText !== savedText;
+
+  useEffect(() => {
+    if (!roomLink) {
+      setQrCode("");
+      return;
+    }
+
+    sharing.qr(roomLink).then(setQrCode).catch(() => setStatus({ type: 'error', message: 'Could not generate the QR code. The room link still works.' }));
+  }, [roomLink, setStatus]);
+
+  async function createRoom() {
+    setLoading("create");
+    setStatus({ type: "idle", message: "" });
+
+    try {
+      const createdRoom = await api.create(clipboardText, ttlMinutes);
+
+      setRoom(createdRoom, clipboardText);
+      setJoinRoomId(createdRoom.roomId);
+      setStatus({
+        type: "success",
+        message: "Room created. Share the ID, link, or QR code.",
+      });
+      window.history.replaceState(null, "", withRoomId(window.location.href, createdRoom.roomId));
+    } catch (error) {
+      setStatus({ type: "error", message: getErrorMessage(error) });
+    } finally {
+      setLoading("");
+    }
+  }
+
+  const fetchRoom = useCallback(async (roomId, options = {}) => {
+    const normalizedRoomId = normalizeRoomInput(roomId);
+
+    if (!normalizedRoomId) {
+      if (!options.silent) {
+        setStatus({ type: "error", message: "Enter a room ID first." });
+      }
+      return;
+    }
+
+    if (!ROOM_ID_PATTERN.test(normalizedRoomId)) {
+      if (!options.silent) {
+        setStatus({
+          type: "error",
+          message: "Room ID should be 8 to 32 letters or numbers.",
+        });
+      }
+      return;
+    }
+
+    if (
+      options.silent &&
+      (lastFetchedRoomId.current === normalizedRoomId ||
+        pendingRoomId.current === normalizedRoomId)
+    ) {
+      return;
+    }
+
+    pendingRoomId.current = normalizedRoomId;
+    setLoading("join");
+    if (!options.silent) {
+      setStatus({ type: "idle", message: "" });
+    }
+
+    try {
+      const fetchedRoom = await api.read(normalizedRoomId);
+
+      lastFetchedRoomId.current = normalizedRoomId;
+      setRoom(fetchedRoom, fetchedRoom.text);
+      setClipboardText(fetchedRoom.text);
+      setJoinRoomId(fetchedRoom.roomId);
+      setStatus({
+        type: "success",
+        message: "Room loaded into the clipboard.",
+      });
+      window.history.replaceState(null, "", withRoomId(window.location.href, fetchedRoom.roomId));
+    } catch (error) {
+      lastFetchedRoomId.current = "";
+      setStatus({ type: "error", message: getErrorMessage(error) });
+    } finally {
+      pendingRoomId.current = "";
+      setLoading("");
+    }
+  }, [setRoom, setLoading, setStatus]);
+
+  useEffect(() => {
+    const normalizedRoomId = normalizeRoomInput(joinRoomId);
+
+    if (
+      normalizedRoomId.length < AUTO_JOIN_MIN_LENGTH ||
+      !ROOM_ID_PATTERN.test(normalizedRoomId) ||
+      normalizedRoomId === room?.roomId
+    ) {
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => {
+      fetchRoom(normalizedRoomId, { silent: true });
+    }, 650);
+
+    return () => clearTimeout(timeout);
+  }, [fetchRoom, joinRoomId, room?.roomId]);
+
+  useEffect(() => {
+    const roomIdFromUrl = roomIdFromLocation(window.location.href);
+
+    if (roomIdFromUrl) {
+      setJoinRoomId(roomIdFromUrl);
+      fetchRoom(roomIdFromUrl);
+    }
+  }, [fetchRoom]);
+
+  async function updateRoom() {
+    if (!room?.roomId) {
+      setStatus({
+        type: "error",
+        message: "Create or join a room before updating.",
+      });
+      return;
+    }
+
+    setLoading("update");
+    setStatus({ type: "idle", message: "" });
+
+    try {
+      const updatedRoom = await api.update(room.roomId, clipboardText);
+
+      setRoom(updatedRoom, clipboardText);
+      setStatus({ type: "success", message: "Room text updated." });
+    } catch (error) {
+      setStatus({ type: "error", message: getErrorMessage(error) });
+    } finally {
+      setLoading("");
+    }
+  }
+
+  async function saveClipboard() {
+    if (room?.roomId) {
+      await updateRoom();
+      return;
+    }
+
+    await createRoom();
+  }
+
+  async function deleteRoom() {
+    if (!room?.roomId) return;
+
+    setLoading("delete");
+    setStatus({ type: "idle", message: "" });
+
+    try {
+      await api.remove(room.roomId);
+      setRoom(null);
+      setClipboardText("");
+      setJoinRoomId("");
+      setQrCode("");
+      lastFetchedRoomId.current = "";
+      pendingRoomId.current = "";
+      setStatus({ type: "success", message: "Room deleted from the server." });
+      window.history.replaceState(null, "", withRoomId(window.location.href, null));
+    } catch (error) {
+      setStatus({ type: "error", message: getErrorMessage(error) });
+    } finally {
+      setLoading("");
+    }
+  }
+
+  function downloadQrCode() {
+    if (!qrCode) return;
+
+    sharing.downloadQr(qrCode, room?.roomId);
+  }
+
+  return {
+    editor: { room, clipboardText, setClipboardText, isDirty, ttlMinutes, setTtlMinutes, isBusy, loading, saveClipboard, copied, copyValue, deleteRoom },
+    join: { joinRoomId, setJoinRoomId, fetchRoom, loading, isBusy },
+    share: { room, roomLink, qrCode, copied, onCopy: copyValue, onDownload: downloadQrCode },
+    feedback: { status, copied },
+  };
+}

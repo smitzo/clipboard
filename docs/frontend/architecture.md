@@ -19,8 +19,7 @@ rejected. Navigation updates preserve unrelated query/fragment state; generated
 share links include only the room parameter so unrelated URL data is not shared.
 
 Room metadata, pending operation and draft/active/deleted phases now transition
-through a reducer. A failed mutation retains the prior room and draft. App still
-owns request orchestration and editor/join presentation at this boundary.
+through a reducer. A failed mutation retains the prior room and draft.
 Editable text is independent from the confirmed snapshot held with room metadata.
 Dirty state compares those exact strings. Creating a room no longer trims the
 editor, matching the corrected server fidelity contract; edits become confirmed
@@ -42,5 +41,29 @@ and unsupported/denied operations reject without an uncontrolled promise error.
 earlier completions, replacement notices reset their lifetime, and unmount
 cancels timers and invalidates in-flight feedback. One live presentation renders
 these results; the adapters do not create independent notifications.
-The following roadmap extraction moves each responsibility behind a tested
-adapter/controller or feature contract; those extractions are not yet claimed.
+
+## Composition and state ownership
+
+App now composes navigation, editor, join, share and feedback. The controller
+hook owns request orchestration and exposes explicit feature props; it is the
+only owner of active metadata, draft, pending operations and URL changes.
+
+```mermaid
+flowchart TD
+    App[App composition] --> Editor[ClipboardEditor]
+    App --> Join[JoinRoom]
+    App --> Share[LinkDisplay]
+    App --> Feedback[Feedback]
+    Controller[useRoomController] -->|Feature props and callbacks| App
+    Controller --> Reducer[Room metadata / confirmed text / pending state]
+    Controller --> Draft[Editable draft]
+    Controller --> API[Validated API adapter]
+    Controller --> Location[Pure ID / URL helpers]
+    Controller --> Sharing[Browser sharing adapters]
+    Controller --> Notices[useFeedback / owned timers]
+```
+
+This extraction preserves explicit-save behavior and current presentation.
+Request cancellation, operation identities, dirty-room switching, conflict
+recovery and browser navigation reconciliation remain subsequent reliability
+work. Structural separation alone does not establish race safety.
