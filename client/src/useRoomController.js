@@ -20,6 +20,7 @@ export function useRoomController() {
   const lastFetchedRoomId = useRef("");
   const pendingRoomId = useRef("");
   const readTask = useRef(null);
+  const suppressedAutoId = useRef('');
   useEffect(() => () => { readTask.current?.controller.abort(); readTask.current = null; }, []);
 
   const roomLink = useMemo(() => {
@@ -61,7 +62,7 @@ export function useRoomController() {
     }
   }
 
-  const fetchRoom = useCallback(async (roomId, options = {}) => {
+  const fetchRoom = useCallback((roomId, options = {}) => {
     const normalizedRoomId = normalizeRoomInput(roomId);
 
     if (!normalizedRoomId) {
@@ -81,13 +82,9 @@ export function useRoomController() {
       return;
     }
 
-    if (
-      options.silent &&
-      (lastFetchedRoomId.current === normalizedRoomId ||
-        pendingRoomId.current === normalizedRoomId)
-    ) {
-      return;
-    }
+    if (readTask.current?.id === normalizedRoomId) return readTask.current.promise;
+    if (options.silent && (lastFetchedRoomId.current === normalizedRoomId || suppressedAutoId.current === normalizedRoomId)) return;
+    if (!options.silent) suppressedAutoId.current = '';
 
     readTask.current?.controller.abort();
     const task = { id: normalizedRoomId, controller: new AbortController() };
@@ -98,6 +95,7 @@ export function useRoomController() {
       setStatus({ type: "idle", message: "" });
     }
 
+    task.promise = (async () => {
     try {
       const fetchedRoom = await api.read(normalizedRoomId, { signal: task.controller.signal });
       if (readTask.current !== task) return;
@@ -122,6 +120,8 @@ export function useRoomController() {
         setLoading("");
       }
     }
+    })();
+    return task.promise;
   }, [setRoom, setLoading, setStatus]);
 
   useEffect(() => {
@@ -144,11 +144,12 @@ export function useRoomController() {
 
   useEffect(() => {
     const roomIdFromUrl = roomIdFromLocation(window.location.href);
-
+    let active = true;
     if (roomIdFromUrl) {
       setJoinRoomId(roomIdFromUrl);
-      fetchRoom(roomIdFromUrl);
+      queueMicrotask(() => { if (active) fetchRoom(roomIdFromUrl, { silent: true }); });
     }
+    return () => { active = false; };
   }, [fetchRoom]);
 
   async function updateRoom() {
@@ -214,6 +215,7 @@ export function useRoomController() {
   }
 
   function cancelJoin() {
+    suppressedAutoId.current = readTask.current?.id || normalizeRoomInput(joinRoomId);
     readTask.current?.controller.abort(); readTask.current = null;
     pendingRoomId.current = ''; setLoading('');
     setStatus({ type: 'success', message: 'Join cancelled. Your draft is unchanged.' });

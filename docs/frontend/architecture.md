@@ -79,3 +79,8 @@ Every exit removes its timer and caller-abort listener. Timeout, deliberate
 cancellation and network failure have separate codes; server status/code/retry
 hints remain intact. A cancelled join retains its draft. Mutation timeout is
 uncertain completion and never implies that the server did not apply the save.
+
+URL, debounced and manual joins share the current room-read promise. StrictMode
+effect replay queues initial URL work until the live effect is known, avoiding a
+duplicate initial fetch. Cancelling a join suppresses automatic restart for that
+input; a deliberate manual retry can start it again.
