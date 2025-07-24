@@ -13,6 +13,7 @@ export function useRoomController() {
   const [joinRoomId, setJoinRoomId] = useState("");
   const [ttlMinutes, setTtlMinutes] = useState(60);
   const [pendingSwitch, setPendingSwitch] = useState(null);
+  const [conflict, setConflict] = useState(null);
   const [{ room, savedText, loading }, dispatch] = useReducer(roomReducer, initialRoomState);
   const setRoom = useCallback((room, text = '') => dispatch({ type: room ? 'confirmed' : 'deleted', room, text }), []);
   const [qrCode, setQrCode] = useState("");
@@ -62,6 +63,7 @@ export function useRoomController() {
       if (operation.current !== task) return;
 
       setRoom(createdRoom, clipboardText);
+      setConflict(null);
       setJoinRoomId(createdRoom.roomId);
       setStatus({
         type: "success",
@@ -124,6 +126,7 @@ export function useRoomController() {
 
       lastFetchedRoomId.current = normalizedRoomId;
       setRoom(fetchedRoom, fetchedRoom.text);
+      setConflict(null);
       setClipboardText(fetchedRoom.text);
       setJoinRoomId(fetchedRoom.roomId);
       setStatus({
@@ -187,13 +190,15 @@ export function useRoomController() {
     setStatus({ type: "idle", message: "" });
 
     try {
-      const updatedRoom = await api.update(room.roomId, clipboardText, { signal: task.controller.signal });
+      const updatedRoom = await api.update(room.roomId, clipboardText, { signal: task.controller.signal, revision: room.revision });
       if (operation.current !== task) return;
 
       setRoom(updatedRoom, clipboardText);
+      setConflict(null);
       setStatus({ type: "success", message: "Room text updated." });
     } catch (error) {
       if (operation.current !== task) return;
+      if (error.status === 412) setConflict({ roomId: room.roomId });
       setStatus({ type: "error", message: getErrorMessage(error) });
     } finally {
       finishOperation(task);
@@ -219,6 +224,7 @@ export function useRoomController() {
       await api.remove(room.roomId, { signal: task.controller.signal });
       if (operation.current !== task) return;
       setRoom(null);
+      setConflict(null);
       setClipboardText("");
       setJoinRoomId("");
       setQrCode("");
@@ -254,8 +260,22 @@ export function useRoomController() {
     if (target) return fetchRoom(target.roomId, { ...target.options, silent: false, allowDiscard: true });
   }
 
+  function reloadConflict() { if (conflict) return fetchRoom(conflict.roomId); }
+  async function reapplyConflict() {
+    if (!conflict) return;
+    const task = beginOperation('rebase'); if (!task) return;
+    try {
+      const latest = await api.read(conflict.roomId, { signal: task.controller.signal });
+      if (operation.current !== task) return;
+      setRoom(latest, latest.text); setConflict(null);
+      setStatus({ type: 'success', message: 'Latest revision loaded. Review your draft, then save to replace the server text.' });
+    } catch (error) {
+      if (operation.current === task) setStatus({ type: 'error', message: getErrorMessage(error) });
+    } finally { finishOperation(task); }
+  }
+
   return {
-    editor: { room, clipboardText, setClipboardText, isDirty, ttlMinutes, setTtlMinutes, isBusy, loading, saveClipboard, copied, copyValue, deleteRoom },
+    editor: { room, clipboardText, setClipboardText, isDirty, ttlMinutes, setTtlMinutes, isBusy, loading, saveClipboard, copied, copyValue, deleteRoom, conflict, reloadConflict, reapplyConflict },
     join: { joinRoomId, setJoinRoomId, fetchRoom, cancelJoin, loading, isBusy },
     share: { room, roomLink, qrCode, copied, onCopy: copyValue, onDownload: downloadQrCode },
     feedback: { status, copied },

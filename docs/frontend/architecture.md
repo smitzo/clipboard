@@ -99,3 +99,9 @@ Joining with a dirty draft requires an explicit stay/discard decision before the
 request begins. Typing during an initially clean read triggers the same guard
 before its result can replace the draft. Stay keeps the active room and text;
 discard requests the target afresh. Query joins use this same controller path.
+
+Saves send the last confirmed revision when available. A 412 retains the draft
+and exposes reload or keep-draft recovery. Reload uses the dirty-draft guard;
+keep-draft fetches the latest server snapshot/revision without changing local
+text. The user must review and explicitly save again. Recovery never silently
+replays PUT, and legacy servers without revision metadata remain usable.

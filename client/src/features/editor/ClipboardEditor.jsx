@@ -6,7 +6,7 @@ const TTL_OPTIONS = [
   { label: '6 hours', value: 360 }, { label: '24 hours', value: 1440 },
 ];
 
-export default function ClipboardEditor({ room, clipboardText, setClipboardText, isDirty, ttlMinutes, setTtlMinutes, isBusy, loading, saveClipboard, copied, copyValue, deleteRoom }) {
+export default function ClipboardEditor({ room, clipboardText, setClipboardText, isDirty, ttlMinutes, setTtlMinutes, isBusy, loading, saveClipboard, copied, copyValue, deleteRoom, conflict, reloadConflict, reapplyConflict }) {
   return (
 <section
             id="create"
@@ -90,6 +90,13 @@ export default function ClipboardEditor({ room, clipboardText, setClipboardText,
               )}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5 max-[960px]:px-[18px] max-[520px]:p-4">
+              {conflict && <div className="w-full rounded-lg border border-[#f1c7c0] bg-[#fff4f2] p-4">
+                <p>Someone saved a newer revision. Your draft is unchanged.</p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <Button variant="secondary" disabled={isBusy} onClick={reloadConflict}>Reload server text</Button>
+                  <Button variant="secondary" disabled={isBusy} onClick={reapplyConflict}>Keep draft with latest revision</Button>
+                </div>
+              </div>}
               <div className="grid grid-cols-2 gap-3 max-[520px]:w-full max-[520px]:grid-cols-1">
                 <Button
                   type="button"

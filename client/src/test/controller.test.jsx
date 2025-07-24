@@ -24,6 +24,22 @@ it('aborts superseded reads and ignores their late success or failure', async ()
   expect(result.current.feedback.status.type).toBe('success');
 });
 
+it('conflicts retain the draft and require a deliberate latest-revision read before reapplying', async () => {
+  const read = vi.spyOn(api, 'read').mockResolvedValueOnce(fixtureRoom()).mockResolvedValueOnce(fixtureRoom('ABCDEF123456', 'remote', 3));
+  const update = vi.spyOn(api, 'update').mockRejectedValueOnce(Object.assign(new Error('Room changed.'), { status: 412 })).mockResolvedValueOnce(fixtureRoom('ABCDEF123456', 'local', 4));
+  const { result } = renderHook(() => useRoomController());
+  await act(async () => result.current.join.fetchRoom('ABCDEF123456'));
+  act(() => result.current.editor.setClipboardText('local'));
+  await act(async () => result.current.editor.saveClipboard());
+  expect(result.current.editor.clipboardText).toBe('local'); expect(result.current.editor.conflict).toBeTruthy();
+  expect(update.mock.calls[0][2].revision).toBe(1);
+  await act(async () => result.current.editor.reapplyConflict());
+  expect(read).toHaveBeenCalledTimes(2); expect(update).toHaveBeenCalledTimes(1);
+  expect(result.current.editor.room.revision).toBe(3); expect(result.current.editor.clipboardText).toBe('local');
+  await act(async () => result.current.editor.saveClipboard());
+  expect(update.mock.calls[1][2].revision).toBe(3); expect(result.current.editor.conflict).toBeNull();
+});
+
 it('delayed create and update confirm their submitted snapshots while preserving later typing', async () => {
   const creating = deferred(); const updating = deferred();
   const create = vi.spyOn(api, 'create').mockReturnValue(creating.promise);
