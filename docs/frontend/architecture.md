@@ -90,3 +90,8 @@ invalidate reads, duplicate mutations are blocked synchronously, and only the
 current operation may confirm metadata, report an error or clear loading.
 Unmount aborts and invalidates all active request ownership. An old read's
 finally handler cannot clear a later save or revive a deleted room.
+
+Save confirms the exact text snapshot submitted by that action. It does not
+replace the editable draft on success. Typing during either create or update
+therefore remains visible and dirty relative to the newly confirmed snapshot;
+delayed-mutation regressions enforce this ownership rule.

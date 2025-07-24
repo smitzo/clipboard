@@ -24,6 +24,28 @@ it('aborts superseded reads and ignores their late success or failure', async ()
   expect(result.current.feedback.status.type).toBe('success');
 });
 
+it('delayed create and update confirm their submitted snapshots while preserving later typing', async () => {
+  const creating = deferred(); const updating = deferred();
+  const create = vi.spyOn(api, 'create').mockReturnValue(creating.promise);
+  const update = vi.spyOn(api, 'update').mockReturnValue(updating.promise);
+  const { result } = renderHook(() => useRoomController());
+  act(() => result.current.editor.setClipboardText('created snapshot'));
+  let creation;
+  act(() => { creation = result.current.editor.saveClipboard(); });
+  act(() => result.current.editor.setClipboardText('typing during create'));
+  await act(async () => { creating.resolve(fixtureRoom('ABCDEF123456', 'created snapshot')); await creation; });
+  expect(create.mock.calls[0][0]).toBe('created snapshot');
+  expect(result.current.editor.clipboardText).toBe('typing during create');
+  expect(result.current.editor.isDirty).toBe(true);
+  let saving;
+  act(() => { saving = result.current.editor.saveClipboard(); });
+  act(() => result.current.editor.setClipboardText('typing during update'));
+  await act(async () => { updating.resolve(fixtureRoom('ABCDEF123456', 'typing during create', 2)); await saving; });
+  expect(update.mock.calls[0][1]).toBe('typing during create');
+  expect(result.current.editor.clipboardText).toBe('typing during update');
+  expect(result.current.editor.isDirty).toBe(true);
+});
+
 it('stale read finally cannot clear a newer mutation and rapid duplicate saves are not replayed', async () => {
   const reading = deferred(); const saving = deferred();
   vi.spyOn(api, 'read').mockReturnValue(reading.promise);
