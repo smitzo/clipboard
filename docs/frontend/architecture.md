@@ -64,8 +64,7 @@ flowchart TD
 ```
 
 This extraction preserves explicit-save behavior and current presentation.
-Operation identities, dirty-room switching, conflict
-recovery and browser navigation reconciliation remain subsequent reliability
+Conflict recovery and browser navigation reconciliation remain subsequent reliability
 work. Structural separation alone does not establish race safety.
 
 ## Implemented async guarantees
@@ -95,3 +94,8 @@ Save confirms the exact text snapshot submitted by that action. It does not
 replace the editable draft on success. Typing during either create or update
 therefore remains visible and dirty relative to the newly confirmed snapshot;
 delayed-mutation regressions enforce this ownership rule.
+
+Joining with a dirty draft requires an explicit stay/discard decision before the
+request begins. Typing during an initially clean read triggers the same guard
+before its result can replace the draft. Stay keeps the active room and text;
+discard requests the target afresh. Query joins use this same controller path.

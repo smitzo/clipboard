@@ -51,9 +51,9 @@ it('stale read finally cannot clear a newer mutation and rapid duplicate saves a
   vi.spyOn(api, 'read').mockReturnValue(reading.promise);
   const create = vi.spyOn(api, 'create').mockReturnValue(saving.promise);
   const { result } = renderHook(() => useRoomController());
-  act(() => result.current.editor.setClipboardText('save fixture'));
   let read; let save;
   act(() => { read = result.current.join.fetchRoom('ABCDEF123456'); });
+  act(() => result.current.editor.setClipboardText('save fixture'));
   act(() => { save = result.current.editor.saveClipboard(); result.current.editor.saveClipboard(); });
   expect(create).toHaveBeenCalledTimes(1);
   await act(async () => { reading.resolve(fixtureRoom()); await read; });
@@ -62,6 +62,19 @@ it('stale read finally cannot clear a newer mutation and rapid duplicate saves a
   await act(async () => { saving.resolve(fixtureRoom('ZYXWVU654321', 'save fixture')); await save; });
   expect(result.current.editor.loading).toBe('');
   expect(result.current.editor.room.roomId).toBe('ZYXWVU654321');
+});
+
+it('dirty room switching offers stay or discard before any replacement request', async () => {
+  const read = vi.spyOn(api, 'read').mockResolvedValue(fixtureRoom('ZYXWVU654321', 'received'));
+  const { result } = renderHook(() => useRoomController());
+  act(() => result.current.editor.setClipboardText('unsaved draft'));
+  act(() => { result.current.join.fetchRoom('ZYXWVU654321'); });
+  expect(read).not.toHaveBeenCalled(); expect(result.current.switchPrompt.pending).toBeTruthy();
+  act(() => result.current.switchPrompt.onStay());
+  expect(result.current.editor.clipboardText).toBe('unsaved draft'); expect(result.current.editor.room).toBeNull();
+  act(() => { result.current.join.fetchRoom('ZYXWVU654321'); });
+  await act(async () => result.current.switchPrompt.onDiscard());
+  expect(result.current.editor.clipboardText).toBe('received'); expect(read).toHaveBeenCalledTimes(1);
 });
 
 it('deduplicates query, automatic and explicit joins including StrictMode effect replay', async () => {

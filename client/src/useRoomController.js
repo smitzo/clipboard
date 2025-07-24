@@ -12,6 +12,7 @@ export function useRoomController() {
   const [clipboardText, setClipboardText] = useState("");
   const [joinRoomId, setJoinRoomId] = useState("");
   const [ttlMinutes, setTtlMinutes] = useState(60);
+  const [pendingSwitch, setPendingSwitch] = useState(null);
   const [{ room, savedText, loading }, dispatch] = useReducer(roomReducer, initialRoomState);
   const setRoom = useCallback((room, text = '') => dispatch({ type: room ? 'confirmed' : 'deleted', room, text }), []);
   const [qrCode, setQrCode] = useState("");
@@ -41,6 +42,7 @@ export function useRoomController() {
 
   const isBusy = Boolean(loading);
   const isDirty = clipboardText !== savedText;
+  const draftState = useRef(); draftState.current = { text: clipboardText, savedText };
 
   useEffect(() => {
     if (!roomLink) {
@@ -97,9 +99,14 @@ export function useRoomController() {
     if (readTask.current?.id === normalizedRoomId) return readTask.current.promise;
     if (options.silent && (lastFetchedRoomId.current === normalizedRoomId || suppressedAutoId.current === normalizedRoomId)) return;
     if (!options.silent) suppressedAutoId.current = '';
+    if (!options.allowDiscard && draftState.current.text !== draftState.current.savedText) {
+      suppressedAutoId.current = normalizedRoomId;
+      setPendingSwitch({ roomId: normalizedRoomId, options }); return;
+    }
 
     const task = beginOperation('join'); if (!task) return;
     task.id = normalizedRoomId;
+    task.startDraft = draftState.current.text;
     readTask.current = task;
     pendingRoomId.current = normalizedRoomId;
     if (!options.silent) {
@@ -110,6 +117,10 @@ export function useRoomController() {
     try {
       const fetchedRoom = await api.read(normalizedRoomId, { signal: task.controller.signal });
       if (readTask.current !== task) return;
+      if (draftState.current.text !== task.startDraft) {
+        suppressedAutoId.current = normalizedRoomId;
+        setPendingSwitch({ roomId: normalizedRoomId, options }); return;
+      }
 
       lastFetchedRoomId.current = normalizedRoomId;
       setRoom(fetchedRoom, fetchedRoom.text);
@@ -237,10 +248,17 @@ export function useRoomController() {
     setStatus({ type: 'success', message: 'Join cancelled. Your draft is unchanged.' });
   }
 
+  function stayWithDraft() { setPendingSwitch(null); }
+  function discardAndJoin() {
+    const target = pendingSwitch; setPendingSwitch(null);
+    if (target) return fetchRoom(target.roomId, { ...target.options, silent: false, allowDiscard: true });
+  }
+
   return {
     editor: { room, clipboardText, setClipboardText, isDirty, ttlMinutes, setTtlMinutes, isBusy, loading, saveClipboard, copied, copyValue, deleteRoom },
     join: { joinRoomId, setJoinRoomId, fetchRoom, cancelJoin, loading, isBusy },
     share: { room, roomLink, qrCode, copied, onCopy: copyValue, onDownload: downloadQrCode },
     feedback: { status, copied },
+    switchPrompt: { pending: pendingSwitch, onStay: stayWithDraft, onDiscard: discardAndJoin },
   };
 }

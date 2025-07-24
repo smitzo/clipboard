@@ -5,10 +5,11 @@ import LinkDisplay from './components/LinkDisplay';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Feedback from './components/Feedback';
+import RoomSwitchPrompt from './components/RoomSwitchPrompt';
 import { useRoomController } from './useRoomController';
 
 function App() {
-  const { editor, join, share, feedback } = useRoomController();
+  const { editor, join, share, feedback, switchPrompt } = useRoomController();
   return (
     <div className="min-h-screen bg-[#f6f8f7] bg-[radial-gradient(ellipse_at_90%_0%,#dceee5_0%,transparent_42%)]">
       <Navbar />
@@ -31,6 +32,7 @@ function App() {
         </footer>
       </main>
       <Feedback {...feedback} />
+      <RoomSwitchPrompt {...switchPrompt} />
     </div>
   );
 }
