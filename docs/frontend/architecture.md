@@ -64,8 +64,8 @@ flowchart TD
 ```
 
 This extraction preserves explicit-save behavior and current presentation.
-Conflict recovery and browser navigation reconciliation remain subsequent reliability
-work. Structural separation alone does not establish race safety.
+Structural separation alone does not establish race safety; the implemented
+guarantees below are backed by delayed-response and navigation regressions.
 
 ## Implemented async guarantees
 
@@ -105,3 +105,9 @@ and exposes reload or keep-draft recovery. Reload uses the dirty-draft guard;
 keep-draft fetches the latest server snapshot/revision without changing local
 text. The user must review and explicitly save again. Recovery never silently
 replays PUT, and legacy servers without revision metadata remain usable.
+
+Popstate restores room state through the same join guard; navigating to a blank
+workspace clears local state without deleting the remote room. Staying with a
+dirty draft restores its prior URL. Invalid links and navigation during mutation
+retain the active state. Query writes preserve unrelated parameters, fragments
+and history state. Deletion removes only the room parameter.

@@ -24,6 +24,26 @@ it('aborts superseded reads and ignores their late success or failure', async ()
   expect(result.current.feedback.status.type).toBe('success');
 });
 
+it('popstate reconciles room and query state while cancelled dirty navigation restores the active URL', async () => {
+  vi.spyOn(api, 'read').mockImplementation(async id => fixtureRoom(id, id === 'ABCDEF123456' ? 'first' : 'second'));
+  window.history.replaceState({ fixture: true }, '', '/?mode=keep#editor');
+  const { result } = renderHook(() => useRoomController());
+  await act(async () => result.current.join.fetchRoom('ABCDEF123456'));
+  expect(window.location.search).toBe('?mode=keep&room=ABCDEF123456');
+  expect(window.history.state).toEqual({ fixture: true });
+  act(() => result.current.editor.setClipboardText('dirty'));
+  act(() => { window.history.pushState(null, '', '/?mode=keep&room=ZYXWVU654321#editor'); window.dispatchEvent(new PopStateEvent('popstate')); });
+  expect(result.current.switchPrompt.pending).toBeTruthy();
+  act(() => result.current.switchPrompt.onStay());
+  expect(window.location.search).toBe('?mode=keep&room=ABCDEF123456');
+  expect(result.current.editor.clipboardText).toBe('dirty');
+  act(() => { window.history.pushState(null, '', '/?mode=keep&room=ZYXWVU654321#editor'); window.dispatchEvent(new PopStateEvent('popstate')); });
+  await act(async () => result.current.switchPrompt.onDiscard());
+  expect(result.current.editor.clipboardText).toBe('second'); expect(window.location.hash).toBe('#editor');
+  await act(async () => { window.history.pushState(null, '', '/?mode=keep#editor'); window.dispatchEvent(new PopStateEvent('popstate')); });
+  expect(result.current.editor.room).toBeNull(); expect(result.current.editor.clipboardText).toBe('');
+});
+
 it('conflicts retain the draft and require a deliberate latest-revision read before reapplying', async () => {
   const read = vi.spyOn(api, 'read').mockResolvedValueOnce(fixtureRoom()).mockResolvedValueOnce(fixtureRoom('ABCDEF123456', 'remote', 3));
   const update = vi.spyOn(api, 'update').mockRejectedValueOnce(Object.assign(new Error('Room changed.'), { status: 412 })).mockResolvedValueOnce(fixtureRoom('ABCDEF123456', 'local', 4));

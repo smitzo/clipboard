@@ -23,6 +23,11 @@ export function useRoomController() {
   const readTask = useRef(null);
   const suppressedAutoId = useRef('');
   const operation = useRef(null);
+  const activeLocation = useRef(window.location.href);
+  const replaceLocation = useCallback(id => {
+    const url = withRoomId(window.location.href, id);
+    window.history.replaceState(window.history.state, '', url); activeLocation.current = url.href;
+  }, []);
   const beginOperation = useCallback(kind => {
     if (operation.current && operation.current.kind !== 'join') return null;
     operation.current?.controller.abort(); readTask.current = null; pendingRoomId.current = '';
@@ -43,7 +48,7 @@ export function useRoomController() {
 
   const isBusy = Boolean(loading);
   const isDirty = clipboardText !== savedText;
-  const draftState = useRef(); draftState.current = { text: clipboardText, savedText };
+  const draftState = useRef(); draftState.current = { text: clipboardText, savedText, room };
 
   useEffect(() => {
     if (!roomLink) {
@@ -69,7 +74,7 @@ export function useRoomController() {
         type: "success",
         message: "Room created. Share the ID, link, or QR code.",
       });
-      window.history.replaceState(null, "", withRoomId(window.location.href, createdRoom.roomId));
+      replaceLocation(createdRoom.roomId);
     } catch (error) {
       if (operation.current !== task) return;
       setStatus({ type: "error", message: getErrorMessage(error) });
@@ -133,7 +138,7 @@ export function useRoomController() {
         type: "success",
         message: "Room loaded into the clipboard.",
       });
-      window.history.replaceState(null, "", withRoomId(window.location.href, fetchedRoom.roomId));
+      replaceLocation(fetchedRoom.roomId);
     } catch (error) {
       if (readTask.current !== task || task.controller.signal.aborted) return;
       lastFetchedRoomId.current = "";
@@ -147,7 +152,7 @@ export function useRoomController() {
     }
     })();
     return task.promise;
-  }, [setRoom, setStatus, beginOperation, finishOperation]);
+  }, [setRoom, setStatus, beginOperation, finishOperation, replaceLocation]);
 
   useEffect(() => {
     const normalizedRoomId = normalizeRoomInput(joinRoomId);
@@ -167,15 +172,41 @@ export function useRoomController() {
     return () => clearTimeout(timeout);
   }, [fetchRoom, joinRoomId, room?.roomId]);
 
+  const resetLocalRoom = useCallback(() => {
+    const task = operation.current;
+    if (task?.kind === 'join') { task.controller.abort(); finishOperation(task); }
+    readTask.current = null; pendingRoomId.current = ''; lastFetchedRoomId.current = '';
+    setRoom(null); setClipboardText(''); setJoinRoomId(''); setQrCode(''); setConflict(null); replaceLocation(null);
+  }, [finishOperation, replaceLocation, setRoom]);
+
   useEffect(() => {
-    const roomIdFromUrl = roomIdFromLocation(window.location.href);
     let active = true;
-    if (roomIdFromUrl) {
-      setJoinRoomId(roomIdFromUrl);
-      queueMicrotask(() => { if (active) fetchRoom(roomIdFromUrl, { silent: true }); });
+    function navigate(initial = false) {
+      const target = new URL(window.location.href);
+      const id = roomIdFromLocation(target.href);
+      const returnUrl = activeLocation.current;
+      if (target.searchParams.has('room') && !id) {
+        setStatus({ type: 'error', message: 'This link does not contain a valid room ID.' });
+        if (!initial) window.history.replaceState(window.history.state, '', returnUrl);
+        return;
+      }
+      if (!initial && operation.current && operation.current.kind !== 'join') {
+        window.history.replaceState(window.history.state, '', returnUrl);
+        setStatus({ type: 'error', message: 'Wait for the current operation before switching rooms.' }); return;
+      }
+      if (id && id === draftState.current.room?.roomId) { activeLocation.current = target.href; return; }
+      if (id) {
+        setJoinRoomId(id); fetchRoom(id, { silent: initial, navigation: true, returnUrl });
+      } else if (!initial) {
+        if (draftState.current.text !== draftState.current.savedText) setPendingSwitch({ roomId: null, options: { navigation: true, returnUrl } });
+        else resetLocalRoom();
+      }
     }
-    return () => { active = false; };
-  }, [fetchRoom]);
+    queueMicrotask(() => { if (active) navigate(true); });
+    const popstate = () => navigate(false);
+    window.addEventListener('popstate', popstate);
+    return () => { active = false; window.removeEventListener('popstate', popstate); };
+  }, [fetchRoom, resetLocalRoom, setStatus]);
 
   async function updateRoom() {
     if (!room?.roomId) {
@@ -231,7 +262,7 @@ export function useRoomController() {
       lastFetchedRoomId.current = "";
       pendingRoomId.current = "";
       setStatus({ type: "success", message: "Room deleted from the server." });
-      window.history.replaceState(null, "", withRoomId(window.location.href, null));
+      replaceLocation(null);
     } catch (error) {
       if (operation.current !== task) return;
       setStatus({ type: "error", message: getErrorMessage(error) });
@@ -254,10 +285,15 @@ export function useRoomController() {
     setStatus({ type: 'success', message: 'Join cancelled. Your draft is unchanged.' });
   }
 
-  function stayWithDraft() { setPendingSwitch(null); }
+  function stayWithDraft() {
+    if (pendingSwitch?.options.navigation) window.history.replaceState(window.history.state, '', pendingSwitch.options.returnUrl);
+    setPendingSwitch(null);
+  }
   function discardAndJoin() {
     const target = pendingSwitch; setPendingSwitch(null);
-    if (target) return fetchRoom(target.roomId, { ...target.options, silent: false, allowDiscard: true });
+    if (!target) return;
+    if (!target.roomId) return resetLocalRoom();
+    return fetchRoom(target.roomId, { ...target.options, silent: false, allowDiscard: true });
   }
 
   function reloadConflict() { if (conflict) return fetchRoom(conflict.roomId); }
