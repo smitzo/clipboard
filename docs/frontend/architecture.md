@@ -111,3 +111,10 @@ workspace clears local state without deleting the remote room. Staying with a
 dirty draft restores its prior URL. Invalid links and navigation during mutation
 retain the active state. Query writes preserve unrelated parameters, fragments
 and history state. Deletion removes only the room parameter.
+
+Read recovery is deliberate: retryable connection, timeout, 429 and transient
+gateway/capacity failures expose a retry action after a bounded server hint.
+Seconds or HTTP-date hints are capped at 30 seconds; absent hints wait one second.
+Failed/cancelled input is not automatically joined again. No read retry loops,
+polling or background mutation retries run. POST/PUT/DELETE uncertainty always
+requires a user decision rather than replaying a request.

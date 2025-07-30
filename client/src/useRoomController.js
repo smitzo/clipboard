@@ -3,6 +3,7 @@ import { api } from './api';
 import { sharing } from './sharing';
 import { useFeedback } from './useFeedback';
 import { initialRoomState, roomReducer } from './room-state';
+import { readRetryDelay } from './read-retry';
 import { normalizeRoomInput, ROOM_ID_PATTERN, roomLink as buildRoomLink, roomIdFromLocation, withRoomId } from './room-location';
 
 const AUTO_JOIN_MIN_LENGTH = 12;
@@ -14,6 +15,13 @@ export function useRoomController() {
   const [ttlMinutes, setTtlMinutes] = useState(60);
   const [pendingSwitch, setPendingSwitch] = useState(null);
   const [conflict, setConflict] = useState(null);
+  const [readFailure, setReadFailure] = useState(null);
+  const [retryReady, setRetryReady] = useState(false);
+  useEffect(() => {
+    if (!readFailure) { setRetryReady(false); return; }
+    const timer = setTimeout(() => setRetryReady(true), Math.max(0, readFailure.retryAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [readFailure]);
   const [{ room, savedText, loading }, dispatch] = useReducer(roomReducer, initialRoomState);
   const setRoom = useCallback((room, text = '') => dispatch({ type: room ? 'confirmed' : 'deleted', room, text }), []);
   const [qrCode, setQrCode] = useState("");
@@ -112,6 +120,7 @@ export function useRoomController() {
     }
 
     const task = beginOperation('join'); if (!task) return;
+    setReadFailure(null);
     task.id = normalizedRoomId;
     task.startDraft = draftState.current.text;
     readTask.current = task;
@@ -142,6 +151,9 @@ export function useRoomController() {
     } catch (error) {
       if (readTask.current !== task || task.controller.signal.aborted) return;
       lastFetchedRoomId.current = "";
+      suppressedAutoId.current = normalizedRoomId;
+      const delay = readRetryDelay(error);
+      if (delay !== null) setReadFailure({ roomId: normalizedRoomId, retryAt: Date.now() + delay, message: getErrorMessage(error) });
       setStatus({ type: "error", message: getErrorMessage(error) });
     } finally {
       if (readTask.current === task) {
@@ -297,6 +309,10 @@ export function useRoomController() {
   }
 
   function reloadConflict() { if (conflict) return fetchRoom(conflict.roomId); }
+  function retryJoin() {
+    if (!readFailure || !retryReady || Date.now() < readFailure.retryAt) return;
+    return fetchRoom(readFailure.roomId);
+  }
   async function reapplyConflict() {
     if (!conflict) return;
     const task = beginOperation('rebase'); if (!task) return;
@@ -312,7 +328,7 @@ export function useRoomController() {
 
   return {
     editor: { room, clipboardText, setClipboardText, isDirty, ttlMinutes, setTtlMinutes, isBusy, loading, saveClipboard, copied, copyValue, deleteRoom, conflict, reloadConflict, reapplyConflict },
-    join: { joinRoomId, setJoinRoomId, fetchRoom, cancelJoin, loading, isBusy },
+    join: { joinRoomId, setJoinRoomId, fetchRoom, cancelJoin, retryJoin, readFailure, retryReady, loading, isBusy },
     share: { room, roomLink, qrCode, copied, onCopy: copyValue, onDownload: downloadQrCode },
     feedback: { status, copied },
     switchPrompt: { pending: pendingSwitch, onStay: stayWithDraft, onDiscard: discardAndJoin },

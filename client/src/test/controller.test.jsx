@@ -7,7 +7,7 @@ import { StrictMode } from 'react';
 vi.mock('qrcode', () => ({ default: { toDataURL: async () => 'data:image/png;base64,fixture' } }));
 export const fixtureRoom = (roomId = 'ABCDEF123456', text = 'fixture', revision = 1) => ({ roomId, text, revision, charCount: text.length, createdAt: '2026-10-28T00:00:00Z', updatedAt: '2026-10-28T00:00:00Z', expiresAt: '2026-10-28T01:00:00Z' });
 const deferred = () => { let resolve; let reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 it('aborts superseded reads and ignores their late success or failure', async () => {
   const first = deferred(); const second = deferred();
@@ -22,6 +22,22 @@ it('aborts superseded reads and ignores their late success or failure', async ()
   expect(result.current.editor.clipboardText).toBe('latest');
   expect(result.current.editor.room.roomId).toBe('ZYXWVU654321');
   expect(result.current.feedback.status.type).toBe('success');
+});
+
+it('read recovery waits for server hints and requires user action while mutations are never auto-replayed', async () => {
+  vi.useFakeTimers();
+  const read = vi.spyOn(api, 'read').mockRejectedValueOnce(Object.assign(new Error('Wait.'), { status: 429, retryAfter: '2' })).mockResolvedValueOnce(fixtureRoom());
+  const create = vi.spyOn(api, 'create').mockRejectedValue(Object.assign(new Error('Uncertain.'), { code: 'TIMEOUT' }));
+  const { result } = renderHook(() => useRoomController());
+  await act(async () => result.current.join.fetchRoom('ABCDEF123456'));
+  await act(async () => result.current.join.retryJoin()); expect(read).toHaveBeenCalledTimes(1);
+  await act(async () => vi.advanceTimersByTimeAsync(2000)); expect(read).toHaveBeenCalledTimes(1);
+  await act(async () => result.current.join.retryJoin()); expect(read).toHaveBeenCalledTimes(2);
+  await act(async () => { window.history.replaceState(null, '', '/'); window.dispatchEvent(new PopStateEvent('popstate')); });
+  act(() => result.current.editor.setClipboardText('uncertain fixture'));
+  await act(async () => result.current.editor.saveClipboard());
+  await act(async () => vi.advanceTimersByTimeAsync(30000));
+  expect(create).toHaveBeenCalledTimes(1); expect(result.current.editor.clipboardText).toBe('uncertain fixture');
 });
 
 it('popstate reconciles room and query state while cancelled dirty navigation restores the active URL', async () => {
