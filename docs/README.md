@@ -7,7 +7,7 @@ contracts and measured tradeoffs. Local commands belong in the [project README](
 | Document | Purpose | Status |
 | --- | --- | --- |
 | [System design](system-design.md) | Original architecture review and proposed design | Historical baseline with links to implemented contracts |
-| [Refactor roadmap](roadmap.md) | 140 ordered commits, dependencies and engineering gates | Implementation in progress; root ledger records verified boundaries |
+| [Refactor roadmap](roadmap.md) | 140 ordered commits, dependencies and engineering gates | Verified through 070; later boundaries remain planned |
 | [Configuration constraints](configuration.md) | Validated ranges, lifetime relationships and fail-fast behavior | Implemented limits |
 | [Backend boundaries](architecture/backend-boundaries.md) | App, service, repository and lifecycle ownership | Implemented extraction |
 | [Room API contract](api/README.md) | Corrected room semantics and legacy compatibility | Local HTTP and deterministic clock evidence |
@@ -54,4 +54,4 @@ docs alongside implementation; phase 13 consolidates and checks the full set.
   passing does not establish browser responsiveness or API latency.
 
 Planning baseline: 2026-10-28. Implementation was authorized after the planning
-handoff. The root engineering log records verified progress and actual commits.
+handoff. Execution evidence and actual SHAs remain in ignored local OpenSpec notes.

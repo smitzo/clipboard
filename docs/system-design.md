@@ -5,8 +5,8 @@ refactor. The baseline sections below describe that original snapshot. Backend
 extraction, validated contracts and bounded storage are now implemented; see
 [backend boundaries](architecture/backend-boundaries.md), the
 [current API contract](api/README.md) and [resource bounds](reliability/resource-bounds.md).
-Remaining proposals follow the [roadmap](roadmap.md); the root ledger records
-actual verified commits.
+Remaining proposals follow the [roadmap](roadmap.md); execution evidence remains
+in ignored local OpenSpec notes.
 
 ## Product scope
 

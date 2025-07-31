@@ -1,22 +1,26 @@
-# Ignore node_modules everywhere
+# Dependencies and generated build/cache output
 node_modules/
+dist/
+.vite/
+.cache/
 
-# Ignore environment files everywhere
+# Local environment values; generic examples remain tracked
 .env
+.env.*
+!.env.example
+!.env.*.example
 
-# Client-specific ignores
-client/node_modules/
-client/dist/
-client/.env
+# Local instructions and execution notes never belong in history
+AGENTS.md
+ENGINEERING_LOG.md
 
-# Server-specific ignores
-server/node_modules/
-server/.env
-server/*.log
+# Runtime and package-manager logs
+*.log
 
 # OS or Editor specific
 .DS_Store
 .vscode/
+.idea/
 
 # Local OpenSpec planning artifacts
 /openspec/
@@ -31,4 +35,43 @@ coverage/
 VERCEL.md
 DEMO_SHOWCASE.md
 VALIDATION.md
+/docs/images/demo-showcase-*
+.vercel/
+
+# BEGIN shared local-artifact rules
+openspec/
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.next/
+.nuxt/
+.astro/
+.vite/
+.parcel-cache/
+dist/
+build/
+coverage/
+htmlcov/
+playwright-report/
+test-results/
+*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.*.example
+VERCEL.md
+DEMO_SHOWCASE.md
+VALIDATION.md
 docs/images/demo-showcase-*
+# END shared local-artifact rules

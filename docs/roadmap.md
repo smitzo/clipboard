@@ -1,7 +1,8 @@
 # Clipboard refactor roadmap
 
-Status: **implementation authorized**, 2026-10-28. Actual verified progress and
-commit SHAs are recorded in the root `ENGINEERING_LOG.md`. The user's requested range is 120–150; the proposed target
+Status: **implementation authorized**, 2026-10-28. Verified delivery is through
+boundary 070; 071–140 remain planned. Actual SHAs and execution evidence stay
+in ignored local OpenSpec notes. The user's requested range is 120–150; the target
 is **140 meaningful commits: 14 phases × 10 commits**. Planning/setup changes are
 outside this count. Resume the ordered boundaries below; completed work requires verification evidence.
 
@@ -22,7 +23,9 @@ outside this count. Resume the ordered boundaries below; completed work requires
    remain local and ignored; this roadmap remains available in a fresh clone.
 7. During implementation, record each completed ID, actual SHA, validation
    command/result and material limitations in a delivery ledger. Mark the matching
-   local OpenSpec task complete only after verification. Hosted checks are separate.
+   local OpenSpec task complete only after verification. Keep this execution
+   evidence in ignored local notes, not a tracked engineering log. Hosted checks
+   are separate.
 8. If investigation changes a boundary, revise this plan before proceeding and
    retain a meaningful total in the requested range. Commit count is a delivery
    target, not permission to manufacture changes.
@@ -322,7 +325,7 @@ Workflow files do not count as hosted CI passing until hosted evidence exists.
 
 ## Evidence boundaries
 
-The root engineering ledger records actual commits and local results. Runnable
+Ignored local OpenSpec notes record actual commits and local results. Runnable
 commands belong in the project README and package scripts. Phase-1 measurements
 retain their fixture and runtime context; later checks must distinguish local
 component, browser, HTTP and benchmark evidence from hosted or manual results.

@@ -60,9 +60,9 @@ clipboard/
 
 Start with the [documentation index](docs/README.md),
 [system design](docs/system-design.md), and [140-commit refactor roadmap](docs/roadmap.md).
-Implementation follows the accepted roadmap; verified commits are recorded in
-the root [engineering log](ENGINEERING_LOG.md). Local `openspec/`
-planning artifacts are intentionally ignored by Git, while `docs/` stays tracked.
+Implementation follows the accepted roadmap. Local `openspec/` tasks and
+verification notes are intentionally ignored by Git; reusable system design,
+contracts and engineering decisions stay tracked in `docs/`.
 
 ## Requirements
 
