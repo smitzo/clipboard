@@ -118,3 +118,9 @@ Seconds or HTTP-date hints are capped at 30 seconds; absent hints wait one secon
 Failed/cancelled input is not automatically joined again. No read retry loops,
 polling or background mutation retries run. POST/PUT/DELETE uncertainty always
 requires a user decision rather than replaying a request.
+
+Adversarial controller fixtures cover reordered reads, same-turn duplicate saves,
+typing during save/read, delete-then-late-read, cancellation and unmount without
+remaining timers. Real-API Chrome journeys use independent contexts for revision
+conflicts, dirty switches, back/forward and deliberate network recovery. These
+are automated local results, not manual mobile or cross-browser certification.

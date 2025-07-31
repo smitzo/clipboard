@@ -15,7 +15,7 @@ contracts and measured tradeoffs. Local commands belong in the [project README](
 | [Threat model](security/threat-model.md) | Bearer trust, crypto, origin/rate controls and evidence | Local controls verified; external boundaries explicit |
 | [Privacy lifecycle](security/privacy.md) | Plaintext, bearer links, retention and erasure limits | Implemented data lifecycle and external assumptions |
 | [Failure model](reliability/failure-model.md) | Readiness, draining, restart loss and uncertain mutations | Local lifecycle and real-process evidence |
-| [Client architecture](frontend/architecture.md) | Adapter, controller, state and feature ownership | Extraction verified; reliability phase remains planned |
+| [Client architecture](frontend/architecture.md) | Adapter, controller, state and feature ownership; async guarantees | Extraction and local reliability journeys verified |
 
 Local OpenSpec artifacts live in `openspec/changes/refactor-clipboard/` and are
 intentionally ignored by Git. The complete roadmap and reusable technical docs

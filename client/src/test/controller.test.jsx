@@ -24,6 +24,41 @@ it('aborts superseded reads and ignores their late success or failure', async ()
   expect(result.current.feedback.status.type).toBe('success');
 });
 
+it('delete invalidates an overlapping read so a late room cannot return after deletion', async () => {
+  const late = deferred();
+  vi.spyOn(api, 'read').mockResolvedValueOnce(fixtureRoom()).mockReturnValueOnce(late.promise);
+  vi.spyOn(api, 'remove').mockResolvedValue();
+  const { result } = renderHook(() => useRoomController());
+  await act(async () => result.current.join.fetchRoom('ABCDEF123456'));
+  let reading;
+  act(() => { reading = result.current.join.fetchRoom('ZYXWVU654321'); });
+  await act(async () => result.current.editor.deleteRoom());
+  await act(async () => { late.resolve(fixtureRoom('ZYXWVU654321', 'late')); await reading; });
+  expect(result.current.editor.room).toBeNull(); expect(result.current.editor.clipboardText).toBe('');
+  expect(result.current.share.roomLink).toBe(''); expect(window.location.search).toBe('');
+});
+
+it('typing during a clean read is guarded before replacement and unmount invalidates requests and timers', async () => {
+  vi.useFakeTimers(); const pending = deferred();
+  const read = vi.spyOn(api, 'read').mockReturnValue(pending.promise);
+  const { result, unmount } = renderHook(() => useRoomController());
+  let request;
+  act(() => { request = result.current.join.fetchRoom('ABCDEF123456'); });
+  act(() => result.current.editor.setClipboardText('typed while reading'));
+  await act(async () => { pending.resolve(fixtureRoom()); await request; });
+  expect(result.current.editor.clipboardText).toBe('typed while reading');
+  expect(result.current.switchPrompt.pending).toBeTruthy();
+  act(() => result.current.switchPrompt.onStay());
+  const late = deferred(); read.mockReturnValue(late.promise);
+  act(() => result.current.editor.setClipboardText(''));
+  let second;
+  act(() => { second = result.current.join.fetchRoom('ZYXWVU654321'); });
+  const location = window.location.href; unmount();
+  expect(read.mock.calls[1][1].signal.aborted).toBe(true);
+  await act(async () => { late.resolve(fixtureRoom('ZYXWVU654321')); await second; });
+  expect(window.location.href).toBe(location); expect(vi.getTimerCount()).toBe(0);
+});
+
 it('read recovery waits for server hints and requires user action while mutations are never auto-replayed', async () => {
   vi.useFakeTimers();
   const read = vi.spyOn(api, 'read').mockRejectedValueOnce(Object.assign(new Error('Wait.'), { status: 429, retryAfter: '2' })).mockResolvedValueOnce(fixtureRoom());
