@@ -38,6 +38,10 @@ function Sidebar() {
           Rooms are temporary, encrypted in server memory, rate-limited, and not publicly listed.
         </p>
       </details>
+
+      <p className="mt-3 rounded-lg bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-800">
+        Image pasting is coming soon.
+      </p>
     </section>
   )
 }
