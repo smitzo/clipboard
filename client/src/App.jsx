@@ -281,14 +281,14 @@ function App() {
     <div className="min-h-screen bg-[#f7f8fb] text-slate-950">
       <Navbar />
 
-      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 pt-4 sm:px-6 xl:grid-cols-[280px_minmax(0,1fr)_320px] lg:px-8">
-        <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
+      <main className="grid w-full gap-4 px-3 pb-5 pt-3 sm:px-4 lg:grid-cols-[230px_minmax(0,1fr)_280px] xl:grid-cols-[260px_minmax(0,1fr)_300px]">
+        <aside className="space-y-3 lg:sticky lg:top-17 lg:self-start">
           <Home />
           <Sidebar />
         </aside>
 
         <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
+          <div className="grid gap-3 border-b border-slate-100 px-4 py-3 xl:grid-cols-[auto_minmax(420px,0.7fr)] xl:items-center">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
                 Main clipboard
@@ -303,7 +303,7 @@ function App() {
               </div>
             </div>
 
-            <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
+            <div className="grid gap-2 sm:grid-cols-[150px_minmax(260px,1fr)]">
               <label className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700">
                 <Clock3 size={16} />
                 <select
@@ -321,7 +321,7 @@ function App() {
                 </select>
               </label>
 
-              <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+              <div className="relative">
                 {loading === 'join' ? (
                   <Loader2
                     size={17}
@@ -336,7 +336,7 @@ function App() {
                 <input
                   value={joinRoomId}
                   onChange={(event) => setJoinRoomId(event.target.value)}
-                  placeholder="Paste or enter room ID"
+                  placeholder="Join with room ID"
                   className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-semibold tracking-wide outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-4 focus:ring-cyan-100"
                   aria-label="Room ID auto-join search"
                 />
@@ -344,16 +344,16 @@ function App() {
             </div>
           </div>
 
-          <div className="p-4 sm:p-5">
+          <div className="p-3 sm:p-4">
             <textarea
               id="clipboard-text"
               value={clipboardText}
               onChange={(event) => setClipboardText(event.target.value)}
               placeholder="Paste your text here."
-              className="min-h-[52vh] w-full resize-y overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-base leading-7 text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 xl:min-h-[68vh]"
+              className="min-h-[340px] w-full resize-y overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-base leading-7 text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 lg:min-h-[calc(100vh-260px)] lg:max-h-[calc(100vh-245px)]"
             />
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -361,6 +361,7 @@ function App() {
                   loading={loading === 'create' || loading === 'update'}
                   disabled={isBusy}
                   onClick={saveClipboard}
+                  className="h-10"
                 >
                   {room?.roomId ? 'Update room' : 'Create room'}
                 </Button>
@@ -370,6 +371,7 @@ function App() {
                   icon={Copy}
                   disabled={!clipboardText}
                   onClick={() => copyValue(clipboardText, 'text')}
+                  className="h-10"
                 >
                   {copied === 'text' ? 'Copied' : 'Copy text'}
                 </Button>
@@ -379,6 +381,7 @@ function App() {
                   icon={Link}
                   disabled={!roomLink}
                   onClick={() => copyValue(roomLink, 'link')}
+                  className="h-10"
                 >
                   Copy link
                 </Button>
@@ -388,6 +391,7 @@ function App() {
                   icon={Download}
                   disabled={!qrCode}
                   onClick={downloadQrCode}
+                  className="h-10"
                 >
                   QR
                 </Button>
@@ -400,6 +404,7 @@ function App() {
                 loading={loading === 'delete'}
                 disabled={!room?.roomId || isBusy}
                 onClick={deleteRoom}
+                className="h-10"
               >
                 Delete
               </Button>
@@ -407,7 +412,7 @@ function App() {
           </div>
         </section>
 
-        <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
+        <aside className="space-y-3 lg:sticky lg:top-17 lg:self-start">
           <LinkDisplay
             room={room}
             roomLink={roomLink}
