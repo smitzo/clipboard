@@ -1,28 +1,43 @@
-function Sidebar({ items }) {
+const steps = [
+  {
+    title: 'Paste text',
+    text: 'Use the big clipboard box. It expands and scrolls for longer notes.',
+  },
+  {
+    title: 'Create room',
+    text: 'Click Create room to get a private room ID and QR code.',
+  },
+  {
+    title: 'Share and open',
+    text: 'Send the link, scan QR, or enter the room ID on another device.',
+  },
+]
+
+function Sidebar() {
   return (
-    <section id="security" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Security</p>
-        <h2 className="mt-1 text-lg font-semibold">How rooms stay private</h2>
-      </div>
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 className="text-sm font-black uppercase tracking-wide text-slate-900">Steps</h2>
 
-      <div className="mt-4 divide-y divide-slate-100">
-        {items.map((item) => {
-          const ItemIcon = item.icon
-
-          return (
-            <div key={item.label} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-700">
-                <ItemIcon size={18} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900">{item.label}</p>
-                <p className="mt-1 break-words text-sm text-slate-500">{item.value}</p>
-              </div>
+      <div className="mt-4 space-y-4">
+        {steps.map((step, index) => (
+          <div key={step.title} className="flex gap-3">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-sm font-black text-emerald-800">
+              {index + 1}
+            </span>
+            <div>
+              <p className="text-sm font-bold text-slate-950">{step.title}</p>
+              <p className="mt-1 text-sm leading-5 text-slate-600">{step.text}</p>
             </div>
-          )
-        })}
+          </div>
+        ))}
       </div>
+
+      <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+        <summary className="cursor-pointer font-bold text-slate-800">Security note</summary>
+        <p className="mt-2 leading-5 text-slate-600">
+          Rooms are temporary, encrypted in server memory, rate-limited, and not publicly listed.
+        </p>
+      </details>
     </section>
   )
 }
