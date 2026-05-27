@@ -3,7 +3,7 @@ import Button from './Button'
 
 function LinkDisplay({ copied, onCopy, qrCode, room, roomLink }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">Share</p>
@@ -12,7 +12,7 @@ function LinkDisplay({ copied, onCopy, qrCode, room, roomLink }) {
         <QrCode size={20} className="text-cyan-700" />
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-2 rounded-lg bg-slate-50 p-3">
+      <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-slate-50 p-3">
         <code className="min-w-0 break-all text-sm font-black tracking-wide text-slate-950">
           {room?.roomId || 'Create a room'}
         </code>
@@ -28,11 +28,11 @@ function LinkDisplay({ copied, onCopy, qrCode, room, roomLink }) {
         </Button>
       </div>
 
-      <div className="mt-4 grid place-items-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+      <div className="mt-3 grid place-items-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
         {qrCode ? (
-          <img src={qrCode} alt={`QR code for room ${room.roomId}`} className="h-36 w-36" />
+          <img src={qrCode} alt={`QR code for room ${room.roomId}`} className="h-32 w-32" />
         ) : (
-          <div className="grid h-36 w-36 place-items-center rounded-lg bg-white text-center text-sm font-medium text-slate-400">
+          <div className="grid h-32 w-32 place-items-center rounded-lg bg-white text-center text-sm font-medium text-slate-400">
             QR appears here
           </div>
         )}
